@@ -99,6 +99,7 @@
 
 ## 既知の問題・残課題
 
+- **Perxona Connect Kit による 3D・音声化を計画中**（`docs/plans/perxona-integration.md`）。パック仕様 v2 で `scene.json` に `renderer` と `perxona` ブロックを追加する案。card.json と記憶の分離は変えない
 - **ペルソナ作成機能（画像生成）は保留中**。着手条件: (1) Cloudflare 移行の完了（生成 API キーを
   ブラウザに置けないため Worker が前提）(2) 実際に作り直したい具体的な動機があること。
   着手時はスコープ固定（既存の手作業パイプラインを画面に載せるだけ）、段階分割

@@ -1,0 +1,15 @@
+{
+  "name": "my-portal",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "forwardPorts": [3000, 8083],
+  "portsAttributes": {
+    "3000": { "label": "my-portal (npx serve)" },
+    "8083": { "label": "perxona sample (参考実装・任意)" }
+  },
+  "postCreateCommand": "npm install",
+  "customizations": {
+    "vscode": {
+      "extensions": ["dbaeumer.vscode-eslint"]
+    }
+  }
+}

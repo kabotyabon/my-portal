@@ -68,5 +68,6 @@
 | 2026-08-19 | メモ画面のボタンを暗色ガラス化（白ガラスが背景と同化して読めない問題） | conversation |
 | 2026-08-28 | card.json に「すり合わせの型」節を追加（2回目のズレで目的合わせに切り替える。全文は vault/knowledge/すり合わせの型.md） | persona |
 | 2026-08-28 | 「ナレッジを含める」チェック時に knowledge のファイル一覧をコンテキスト注入（従来は空振り。本文は read_file で取得） | conversation |
+| 2026-09-13 | AIアバター強化に Perxona Connect Kit を採用する方針で計画書を起草（docs/plans/perxona-integration.md）。作業は Codespaces / 別PC で行い、メインPCに外部キットを入れない | persona / plans |
 
 以後、決定のたびにこの表へ1行追記する（新しい行を末尾に）。
