@@ -23,8 +23,8 @@ my-portal の AI アバター（こはる）を、2D 立ち絵＋CSS 疑似表�
 | 初期化 | `presenter.initializeWithConnectKey(publishableKey, { avatarId, sceneId, voiceId })`。`PRESENTER_STATUS` イベントが `Ready` になったら利用可 |
 | 発話 | `present(text)` で TTS＋リップシンク＋モーション自動選択。`presentWithAudio(audio, text)` で自前音声。`interruptPresentation()` で中断 |
 | モーション指定 | 文中に `[MOTION <motion-id>:1]`。Motion Browser（`tools/motion-browser`）で一覧確認 |
-| アバター | カタログ（リアル系・アニメ系）または自前 VRM 1.0（100MB 以下・必須ボーン15本・表情は VRM expression presets か ARKit-52・Spring Bone 未対応） |
-| 音声 | Azure / Google TTS。`GET /voices` でカタログ取得 |
+| アバター | カタログ（リアル系・アニメ系・VRM）または自前 VRM 1.0（100MB 以下・Humanoid 必須ボーン15本・表情は VRM 1.0 expression presets（口形5＋感情5）か ARKit-52・MToon 推奨・Spring Bone 未対応）。**データは Perxona 側クラウド**に組織アカウント単位で保管され、ブラウザは Connect API から取得する。自前 VRM のアップロードは**現状スタッフ依頼（Discord）のみ**（OpenAPI には `POST /assets/vrm/upload` の定義があるがドキュメント上は未開放）。**プレビュー中にアップロードした VRM は約1か月で失効**（正式版以降は保守予定） |
+| 音声 | **TTS は Perxona 側が内蔵**（Azure / Google、OpenAPI 上は aws / elevenlabs も定義）。`present(text)` だけで音声合成→リップシンクまで完結し、自前実装は不要。`GET /voices` で `languages` に `ja` を含むボイスを選び `voiceId` に渡す。自前音声を使いたい場合のみ `presentWithAudio(ArrayBuffer, text)`（フォーマットの明記なし） |
 | キー | **Publishable キー**: ブラウザ可（カタログ取得・presentation 生成・音声トークン）。ドメイン制限を必ず設定。**Secret キー**: サーバー専用（チャットボット・ナレッジ管理）。本計画では **Secret キーを使わない** |
 | LLM | 自前 LLM 可。my-portal は既存の Gemini 呼び出しをそのまま使い、返答テキストを `present()` へ渡す。内蔵チャットボット（従量課金）は使わない |
 | 料金 | 2026-09-20 までプレビュー（課金なし）。以後 Free プラン既定。`present()`（TTS・モーション生成）が従量対象。カタログ取得は対象外。枯渇時は HTTP 400 `code: 1003` / `14005` |
@@ -129,3 +129,4 @@ my-portal の AI アバター（こはる）を、2D 立ち絵＋CSS 疑似表�
 ## 8. 進捗ログ
 
 - **2026-09-13** — 計画書起草。Perxona Connect Kit の仕様調査（キー種別・料金・SDK メソッド・VRM 要件）を §2 に記録。`.devcontainer/devcontainer.json` を追加し Codespaces で着手できる状態にした
+- **2026-09-13** — 追加調査: VRM アップロードは現状スタッフ依頼のみ・プレビュー中は約1か月で失効、TTS は内蔵で自前実装不要、を §2 に反映。Phase 2（VRM 化）は正式版（9/20 以降）のアップロード手段と保守方針を見てから着手する
