@@ -38,12 +38,12 @@
 ## 変遷
 
 - **2026-08-12** — デモモードを追加。`?demo`・台本エンジン `demo-script.js`・パック仕様に `demo.json`（任意）を追加（ADRなし。コードと README が一次情報）
-- **2026-08-08** — 「ファイル削除は JS のキャッシュバストで守れない」ことを記録。`card.json` 移行時に古い index.html が削除済み `persona.md` を探して人格が消える事故が起きた。削除は10分の猶予を見込む運用とし、恒久対策はコンテンツハッシュ（ビルド工程）に持ち越し (旧ADR-055)
-- **2026-08-08** — ホスティングを Cloudflare（Workers + Static Assets）へ移し、ポータルを Access で閉じることを決定。Cloudflare アカウントと独自ドメインの取得待ちで**保留** (旧ADR-053)
-- **2026-08-06** — 公開面と非公開面をリポジトリ境界で分離。アプリは public `my-portal`、データは private `my-portal-vault`。`deploy-pages.yml` の `path: '.'` は据え置き（公開側に `vault/` が無くなり実害がないため。絞ると Pages のルートが変わり PWA の `start_url` に影響する） (旧ADR-048)
+- **2026-08-08** — 「ファイル削除は JS のキャッシュバストで守れない」ことを記録。`card.json` 移行時に古い index.html が削除済み `persona.md` を探して人格が消える事故が起きた。削除は10分の猶予を見込む運用とし、恒久対策はコンテンツハッシュ（ビルド工程）に持ち越し
+- **2026-08-08** — ホスティングを Cloudflare（Workers + Static Assets）へ移し、ポータルを Access で閉じることを決定。Cloudflare アカウントと独自ドメインの取得待ちで**保留**
+- **2026-08-06** — 公開面と非公開面をリポジトリ境界で分離。アプリは public `my-portal`、データは private `my-portal-vault`。`deploy-pages.yml` の `path: '.'` は据え置き（公開側に `vault/` が無くなり実害がないため。絞ると Pages のルートが変わり PWA の `start_url` に影響する）
 
 ## 既知の問題・残課題
 
-- **Cloudflare 移行は決定済み・未着手。** 着手条件はアカウントと独自ドメインの取得。着手時の地雷も整理済み: オリジン変更で localStorage（PAT・APIキー・下書き）が全消え／PWA は入れ直し／`workers.dev` を塞がないと Access が素通し／Access + iOS PWA の相性は最初に実機検証 (旧ADR-053)
+- **Cloudflare 移行は決定済み・未着手。** 着手条件はアカウントと独自ドメインの取得。着手時の地雷も整理済み: オリジン変更で localStorage（PAT・APIキー・下書き）が全消え／PWA は入れ直し／`workers.dev` を塞がないと Access が素通し／Access + iOS PWA の相性は最初に実機検証
 - **コンテンツハッシュ（ビルド工程）未導入。** ファイル削除を伴う変更は「10分の猶予」という運用でしのいでいる。ビルド工程は Cloudflare 移行時の CI 作り直しとあわせて検討
 - **`deploy-pages.yml` の `path: '.'`。** 現状実害は無いが、絞る場合は `manifest.json` とセットで行うこと
