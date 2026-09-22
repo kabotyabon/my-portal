@@ -37,6 +37,24 @@
 - ペルソナが公開リポジトリ側にあるのは、Pages からの相対 fetch で読む必要があるため。
   公開面に置く以上、オリジナル作品（または権利処理済み）のパックだけを置く
 
+### 3D アバター・音声（Perxona Connect Kit）
+
+2D 立ち絵＋CSS 疑似表情に加え、[Perxona Connect Kit](https://connect.perxona.ai/)（XRSPACE、Apache-2.0）による
+3D アバター描画＋TTS＋自動リップシンクを選択式で使える。パック仕様（`scene.json` の `renderer` 切替）ではなく、
+**設定画面のグローバルトグル**として実装した。
+
+- 該当ファイル: `js/core/perxona-config.js`（Key・Avatar/Scene/Voice ID を localStorage に保持）・
+  `js/presenter/perxona-stage.js`（`<sv-presenter>` の初期化・発話・中断）・
+  `js/ui/perxona-settings.js`（設定画面）・`css/perxona.css`・`avatars.html`（アバター一覧・ID 確認用）
+- 有効化条件は `PerxonaConfig.isEnabled()`: Publishable Key が設定済みかつ設定画面のスイッチが ON
+  （Key があれば既定 ON）。デモモード（`?demo`）は常に 2D 固定
+- `avatar-scene.js` が `mountPerxona()` / `unmountPerxona()` で 2D と 3D の表示を切り替える。
+  初期化失敗（`CONNECT_KEY_REJECTED` / SDK 読み込み失敗など）は `onFail` 経由で 2D 立ち絵へ自動フォールバックする
+- Key は Publishable Key のみを使う（Secret Key は使わない）。ブラウザにしか置けないため、
+  ドメイン制限を Console 側で必ず設定する運用を前提にする
+- Region は `asia` 固定（Console の Key 発行元と SDK の CDN/API を一致させる必要があるため）
+- 表情タグ（`[表情:]`）に連動したモーション指定はこの版では未実装。発話中は `present(text)` の自動選択に任せる
+
 ### persona-state — 記憶の実体
 
 `js/domains/persona-state.js` が管理。置き場は `vault/persona-state/`（private 側）。
@@ -70,6 +88,12 @@
 
 ## 変遷
 
+- **2026-09-22** Perxona Connect Kit による3Dアバター・音声を統合。設定画面のグローバルトグルとして実装し、
+  当初計画（`scene.json` に `renderer` / `perxona` ブロックを追加するパック仕様v2）は採らなかった:
+  グローバル1系統で足り、パックごとの3Dアセット管理は現時点で需要がない。
+  これまで別リポジトリ `my-portal-Perxona` で試作していたが、本体（この my-portal）への修正が追随しない
+  問題があったため統合し、以後はここを唯一の開発元にした。試作リポジトリのローカルクローンは削除した。
+  計画書 `docs/plans/perxona-integration.md` は役目を終えたため削除し、内容はこのページへ統合した
 - **2026-08-19** 設定画面の「アバターの表情と舞台」セクション（背景セレクタ・表情プレビュー）を削除。
   表情・背景の切り替え自体は対話中の `[表情:]` / `[背景:]` タグで引き続き動く。
   UI からしか使われていなかった背景の永続化（vault/config.json の avatarBackground・
@@ -99,7 +123,12 @@
 
 ## 既知の問題・残課題
 
-- **Perxona Connect Kit による 3D・音声化を計画中**（`docs/plans/perxona-integration.md`）。パック仕様 v2 で `scene.json` に `renderer` と `perxona` ブロックを追加する案。card.json と記憶の分離は変えない
+- **こはるの VRM 化は未着手**。カタログの既製アバターで運用中。自前 VRM を使う場合、アップロードは現状
+  Perxona 側のスタッフ依頼（Discord）のみで、プレビュー版はアップロード後 約1か月で失効する制約がある
+- **表情タグとPerxonaのモーション指定の連動は未実装**。`present(text)` の自動選択任せで、
+  `[MOTION <motion-id>:1]` によるモーション指定は使っていない
+- **Publishable Key はブラウザ localStorage に平文保存**（storage.md の認証情報保存方式と同じ扱い）。
+  ドメイン制限を Console 側で設定する運用でしか守れていない
 - **ペルソナ作成機能（画像生成）は保留中**。着手条件: (1) Cloudflare 移行の完了（生成 API キーを
   ブラウザに置けないため Worker が前提）(2) 実際に作り直したい具体的な動機があること。
   着手時はスコープ固定（既存の手作業パイプラインを画面に載せるだけ）、段階分割

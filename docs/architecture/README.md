@@ -63,4 +63,4 @@ graph TD
 - **2026-07-31〜**: UIを「Ambient Companion」（アバター常駐の対話画面）へ刷新し、会話ログ起点の改善ループを整備
 - **〜2026-07**: 当初の「多機能アプリ基盤」路線（Next.js/TypeScript化・Backlog等の外部連携・アプリカタログ・家計管理）を放棄し、**AIアバターと日記に絞った静的アプリ**へ転換
 - 保留中の構想: Cloudflare + 独自ドメインへの移行（アカウント取得待ち）・フレームワーク導入・ペルソナ作成機能（詳細は各ページの残課題欄）
-- **2026-09-13**: AIアバター強化（3D・音声・リップシンク）に Perxona Connect Kit を採用する方針。計画書は [docs/plans/perxona-integration.md](../plans/perxona-integration.md)。作業環境は Codespaces（`.devcontainer/`）または別PC
+- **2026-09-13〜2026-09-22**: AIアバター強化（3D・音声・リップシンク）に Perxona Connect Kit を採用し統合完了。詳細は [persona.md](persona.md)「3D アバター・音声（Perxona Connect Kit）」。計画書 `docs/plans/perxona-integration.md` は完了に伴い削除
