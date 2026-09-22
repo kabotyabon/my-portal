@@ -34,6 +34,7 @@
   <link rel="stylesheet" href="css/ai-chat.css?v=20260815">
   <link rel="stylesheet" href="css/mobile.css?v=20260731">
   <link rel="stylesheet" href="css/theme-companion.css?v=20260819b">
+  <link rel="stylesheet" href="css/perxona.css?v=20260921">
 </head>
 <body class="persona-dashboard">
 
@@ -50,6 +51,9 @@
 <!-- Core -->
 <script src="js/core/html-loader.js"></script>
 <script src="js/core/config.js?v=20260819"></script>
+<!-- Perxona Connect Kit（3D アバター＋音声）。avatar-scene.js が参照するので先に読む -->
+<script src="js/core/perxona-config.js?v=20260921"></script>
+<script src="js/presenter/perxona-stage.js?v=20260921"></script>
 <script src="js/core/utils.js"></script>
 <!-- Storage Layer -->
 <script src="js/storage/github-storage.js?v=20260819"></script>
@@ -63,7 +67,9 @@
 <script src="js/domains/diary-service.js?v=20260819"></script>
 <script src="js/domains/conversation-log.js?v=20260806"></script>
 <!-- 返信候補の押され方を応答スタイルへ還流させる（ADR-038） -->
-<script src="js/domains/reply-feedback.js?v=20260807"></script>
+<script src="js/domains/reply-feedback.js?v=20260921"></script>
+<!-- 悩みの相談中だけ応答スタイルの締め付けを緩めて深掘りさせる -->
+<script src="js/domains/counsel-mode.js?v=20260922"></script>
 <!-- ユーザー像と関係の記憶。人格の定義（card.json）とは分ける -->
 <script src="js/domains/persona-state.js?v=20260807"></script>
 <!-- アバターの表情差分・背景レイヤー（ADR-035）。ai-chat.js より先に必要 -->
@@ -73,9 +79,9 @@
 <script src="js/agent/tool-dispatcher.js?v=20260819"></script>
 <!-- Core / API Libs -->
 <script src="js/core/github.js?v=20260510"></script>
-<script src="js/core/gemini.js?v=20260819"></script>
+<script src="js/core/gemini.js?v=20260922b"></script>
 <!-- App entry point（ナビ・レイアウト・初期化） -->
-<script src="js/core/app.js?v=20260819"></script>
+<script src="js/core/app.js?v=20260922"></script>
 
 </body>
 </html>

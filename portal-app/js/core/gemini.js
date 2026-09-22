@@ -11,6 +11,11 @@
  */
 const GEMINI_MODEL = 'gemini-3.5-flash-lite';
 
+// 先頭が優先。混雑時のみ後ろへフォールバックする（thinkingLevel は 3 系の指定なので 3 系だけを並べる）
+const GEMINI_MODELS = [GEMINI_MODEL, 'gemini-3.5-flash', 'gemini-3.7-flash'];
+// モデルごとの1リクエストの上限（超えたら次のモデルへ）。3.5-flash-lite は通常 1〜2 秒、3.5-flash でも 15 秒前後
+const GEMINI_TIMEOUTS_MS = [10000, 20000, 20000];
+
 /**
  * Gemini API を呼び出す
  * @param {Array} contents - 会話履歴（Gemini 形式: [{role: 'user'|'model', parts: [{text: '...'}|{functionCall: '...'}]}]）
@@ -24,7 +29,6 @@ async function callGeminiRaw(contents, systemInstruction = "", tools = null) {
 
   // APIキーは URL クエリではなくヘッダーで送る（ADR-033 決定事項7）。
   // クエリ文字列はリファラやログに残りやすいため。
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
   // 思考トークンも maxOutputTokens の枠を消費する。
   // 旧設定（2.5-flash・2048・思考無制限）ではツール判断を要する依頼（「日記に書いて」等）で
@@ -47,21 +51,53 @@ async function callGeminiRaw(contents, systemInstruction = "", tools = null) {
     requestBody.tools = tools;
   }
 
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-goog-api-key': key
-    },
-    body: JSON.stringify(requestBody)
-  });
+  // 混雑(503)・レート制限(429)・一時的なサーバーエラー(500)、または無応答（タイムアウト）のときは、
+  // 待たずに次のモデルへ切り替える（2026-09-21: 503「high demand」が実発生）。
+  // 同じモデルへの再試行はしない: 混雑中は再試行しても同じ結果になりやすく、待ち時間だけが積み重なる。
+  // それ以外のエラー（キー不正・入力不正など）は再試行しても直らないのですぐ投げる。
+  let lastError;
+  for (const [idx, model] of GEMINI_MODELS.entries()) {
+    const timeoutMs = GEMINI_TIMEOUTS_MS[idx] || 20000;
+    const started = performance.now();
+    // 1リクエストごとに時間制限をかける。タイムアウトが無いと、混雑時に応答が返らないまま
+    // 「考えています…」が1〜3分続く（2026-09-22 実発生）。
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': key
+          },
+          body: JSON.stringify(requestBody),
+          signal: controller.signal
+        }
+      );
+      const ms = Math.round(performance.now() - started);
+      if (res.ok) {
+        console.info(`[Gemini] ${model} OK ${ms}ms`);
+        return await res.json();
+      }
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(`Gemini API ${res.status}: ${err.error?.message || '不明なエラー'}`);
+      const err = await res.json().catch(() => ({}));
+      lastError = new Error(`Gemini API ${res.status}: ${err.error?.message || '不明なエラー'}`);
+      if (![429, 500, 503].includes(res.status)) throw lastError;   // 再試行しても直らない
+      console.warn(`[Gemini] ${model} ${res.status} ${ms}ms → 次のモデルへ`);
+    } catch (e) {
+      if (e.name === 'AbortError') {
+        lastError = new Error(`Gemini API: ${model} が ${timeoutMs / 1000} 秒以内に応答しませんでした`);
+        console.warn(`[Gemini] ${model} タイムアウト（${timeoutMs}ms）→ 次のモデルへ`);
+      } else {
+        throw e;   // 再試行しても直らないエラー、またはネットワーク断
+      }
+    } finally {
+      clearTimeout(timer);
+    }
   }
-
-  return await res.json();
+  throw lastError;
 }
 
 /**

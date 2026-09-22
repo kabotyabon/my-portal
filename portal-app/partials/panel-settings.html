@@ -41,6 +41,35 @@
     </div>
   </div>
 
+  <!-- Perxona 3D アバター＋音声 -->
+  <div class="modal-section" style="margin-bottom:20px;">
+    <div class="modal-label">3D アバター・音声（Perxona）</div>
+    <div class="perxona-field">
+      <label for="perxona-key-input">Publishable Key</label>
+      <input id="perxona-key-input" type="password" placeholder="pxc_...">
+      <p class="modal-note">Console の Organization → Integration → Connect API keys で <strong>Publishable</strong> を作成し、Allowed Domains にこのサイトのホスト名（例: kabotyabon.github.io）を登録します。Secret Key は入れないでください</p>
+    </div>
+    <div class="perxona-field">
+      <label for="perxona-avatar-input">Avatar ID</label>
+      <input id="perxona-avatar-input" type="text" placeholder="01KD2C2QKHN8XZA7Y9S8J2ZNHJ">
+      <p class="modal-note"><a href="avatars.html" target="_blank" rel="noopener">アバター一覧</a>で選んで ID をコピーするか、「このアバターを使う」で設定できます</p>
+    </div>
+    <div class="perxona-field">
+      <label for="perxona-scene-input">Scene ID</label>
+      <input id="perxona-scene-input" type="text" placeholder="01M1JHG7TXY8E6AHH12VQYDQB8">
+    </div>
+    <div class="perxona-field">
+      <label for="perxona-voice-select">音声</label>
+      <select id="perxona-voice-select"><option value="">なし（無音）</option></select>
+    </div>
+    <label class="perxona-inline"><input type="checkbox" id="perxona-enabled"> 3D アバターを使う（オフで従来の 2D 立ち絵）</label>
+    <div class="token-row">
+      <button class="btn-primary" onclick="savePerxonaSettings()">保存して反映</button>
+      <button class="btn-quiet" onclick="testPerxonaVoice()">🔊 音声テスト</button>
+    </div>
+    <div id="perxona-status" class="perxona-status"></div>
+  </div>
+
   <!-- 「アバターの表情と舞台」セクション（背景セレクタ・表情プレビュー）は 2026-08-19 に削除。
        表情・背景の切り替え機能自体は対話中の [表情:]/[背景:] タグで動き続ける（avatar-scene.js） -->
 
@@ -54,3 +83,4 @@
 </div>
 
 <script src="js/ui/settings.js?v=20260819"></script>
+<script src="js/ui/perxona-settings.js?v=20260921"></script>

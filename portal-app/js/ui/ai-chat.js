@@ -362,6 +362,7 @@ function newChatSession() {
   if (currentSession && chatHistory.length > 0) saveCurrentSession();
   currentSession = { id: Date.now().toString(), title: '新しい会話', messages: [] };
   chatHistory = []; attachedFiles = [];
+  if (typeof CounselMode !== 'undefined') CounselMode.reset();
   renderChatPanel(); closeSessionDropdown();
 }
 
@@ -372,6 +373,7 @@ function loadSession(id) {
   currentSession = { ...s };
   chatHistory = s.messages ? [...s.messages] : [];
   attachedFiles = [];
+  if (typeof CounselMode !== 'undefined') CounselMode.reset();
   renderChatPanel(); closeSessionDropdown();
 }
 
@@ -493,11 +495,19 @@ function showChatFailure(text) {
   renderVnFooter(false);
 }
 
-function showAiReply(rawText) {
+/**
+ * @param {string} rawText 表情・候補タグ付きの返答原文
+ * @param {{speak?: boolean}} opts speak:true で 3D アバターに喋らせる（新しい返答のときだけ。
+ *   起動時の挨拶や履歴の再表示では喋らせない）
+ */
+function showAiReply(rawText, opts = {}) {
   const box = document.getElementById('vn-dialogue-box');
   if (box) box.classList.remove('thinking');
 
   const { text, replies } = extractReplyChips(rawText);
+  if (opts.speak && typeof AvatarScene !== 'undefined') {
+    AvatarScene.speak(AvatarScene.parseCues(text).clean);
+  }
   // 候補タグが無いときの既定は、台詞の内容に噛み合うほうを選ぶ
   const fallback = text.trim() === welcomeMsg() ? getWelcomeReplies() : DEFAULT_REPLIES;
   vnReplies = replies.length ? replies : [...fallback];
@@ -549,6 +559,15 @@ function logChatFailure(reason) {
   ConversationLog.flush().catch(err => console.warn('会話ログの保存に失敗しました:', err));
 }
 
+/**
+ * 応答に内部の思考メモ・指示の復唱が混ざっているか（2026-08-25 に「思考プロセス：1. 表情…」がそのまま表示された）。
+ * 誤検出しても被害は「1回出し直す」だけなので、はっきりした痕跡だけを見る。
+ */
+function looksLikeThoughtLeak(text) {
+  const t = String(text || '').replace(/\[[^\]]*\]/g, '');
+  return /思考プロセス|返答は[3-4]文以内|候補タグ付与|関西弁。|^\s*ユーザーは[「『][^」』]*[」』]と.{0,40}(?:考えている|言っている|尋ねている|話している)/m.test(t);
+}
+
 // ---- Agentic Send Chat ----
 /**
  * @param {{fromChip?: boolean, viaButton?: boolean}} opts
@@ -571,8 +590,11 @@ async function sendChat(opts = {}) {
 
   const btn = document.getElementById('chat-send-btn');
   btn.disabled = true; input.value = '';
+  // 音声の自動再生制限は、ユーザー操作の直後でないと解除できない（LLM 応答待ちの後では手遅れ）
+  if (typeof AvatarScene !== 'undefined') AvatarScene.unlockAudio();
   appendChatBubble('user', text);
   chatHistory.push({ role: 'user', content: text });
+  if (typeof CounselMode !== 'undefined') CounselMode.update(text, !!opts.viaButton);
 
   if (chatHistory.length === 1 && currentSession && currentSession.title === '新しい会話') {
     currentSession.title = text.slice(0, 28) + (text.length > 28 ? '…' : '');
@@ -619,6 +641,9 @@ async function sendChat(opts = {}) {
   const aiName = getAiName();
   const persona = getAiPrompt();
 
+  // 悩み・迷いの相談中は、応答スタイルの締め付け（3文以内／掘り下げ2回まで）を緩めて深掘りさせる
+  const counseling = typeof CounselMode !== 'undefined' && CounselMode.active;
+
   let sys = `あなたは「${aiName}」として振る舞ってください。
 人格・口調設定：${persona}
 
@@ -630,13 +655,12 @@ ${getJstNowContext()}
 - 日記の統合・エクスポート
 
 ## 応答スタイル（画面の制約。口調や人格は上の「人格・口調設定」に従う）
-- 台詞は1ページずつ表示されるため、**1回の返答は3文以内**に収めてください。前置き・言い換え・要約の繰り返しをしない。
+- 台詞は1ページずつ表示されるため、**1回の返答は${counseling ? '3文以内（相談モード。1文は短く）' : '原則2文、多くても3文まで'}**に収めてください。前置き・言い換え・要約の繰り返しをしない。
 - 共感や励ましを添える場合も1文だけにしてください（言葉選びは人格設定に従う）。
 - 朝の挨拶時や、ユーザーからの体調・気分・コンディションの報告に対しては、無理をさせず温かく寄り添い、その日の過ごし方や労いの言葉をかけてください。
 - 同じ入り方・同じ締め方を続けて使わないでください。毎回同じ言葉で締めない。
 - 「〜のメリットは？」のように情報や選択肢を求められたら、**まず内容で答えて**ください。質問を質問で返さない。
-- 掘り下げの問いかけは連続2回までにしてください。2回で答えが出なければ、あなたから案を出して選んでもらう。
-- ユーザーが「ありがとう」など会話を閉じる言葉を送ったら、直前の質問を蒸し返さず短く締めてください。
+${counseling ? '' : '- 掘り下げの問いかけは連続2回までにしてください。2回で答えが出なければ、あなたから案を出して選んでもらう。\n'}- ユーザーが「ありがとう」など会話を閉じる言葉を送ったら、直前の質問を蒸し返さず短く締めてください。
 
 ## 記録の書き込み方（この節は最優先で守る）
 - **「日記に書いといて」「追記して」と言われたら append_to_file を使ってください。**
@@ -644,6 +668,9 @@ ${getJstNowContext()}
 - 対象を言わずに「日記に書いて」「記録して」とだけ頼まれたら、**何を書くか聞き返さず**、
   直前の話題から残す価値のある内容を1〜3行にまとめて書いてください。何を書いたかは報告で伝わります。
   直前の話題がどうしても特定できないときだけ、候補を挙げて確認してください。
+- **日記に書くのは、ユーザーが話した事実・出来事・気持ちだけです。**
+  「〜な様子」「〜と感じられる」「少し落ち着いたようだ」のような、あなたから見た評価・感想・分析は書かないでください。
+  気持ちを書くときは、ユーザー自身が言った言葉や、その日の出来事として書いてください（例:「愚痴を言って気持ちが軽くなった」ではなく「仕事の愚痴を話した」）。
 - **save_file はファイルを丸ごと置き換えます。**既存の内容は消えます。
   置き換えが必要な場合だけ使い、必ず先に read_file で現在の中身を取得して、
   残したい部分を含めた全文を渡してください。
@@ -667,7 +694,9 @@ ${getJstNowContext()}
 
 ${typeof AvatarScene !== 'undefined' ? AvatarScene.promptGuide() : ''}
 
-${typeof ReplyFeedback !== 'undefined' ? ReplyFeedback.promptGuide(chatHistory) : ''}
+${typeof ReplyFeedback !== 'undefined' ? ReplyFeedback.promptGuide(chatHistory, { relaxLength: counseling }) : ''}
+
+${counseling ? CounselMode.promptBlock() : ''}
 
 ${typeof PersonaState !== 'undefined' ? PersonaState.promptGuide() : ''}
 
@@ -711,6 +740,7 @@ ${typeof PersonaState !== 'undefined' ? PersonaState.promptGuide() : ''}
     let maxIter = 5;
     let finalReply = "";
     let failReason = '';
+    let leakRetried = false;   // 思考漏出の再生成は1往復につき1回まで
 
     while (loop && maxIter-- > 0) {
       const data = await callGeminiRaw(currentContents, sys, ToolDefinitions);
@@ -741,15 +771,24 @@ ${typeof PersonaState !== 'undefined' ? PersonaState.promptGuide() : ''}
         }
         currentContents.push({ role: 'user', parts: responses });
       } else {
+        const text = parts.map(p => p.text || '').join('');
+        // 内部の思考メモが本文に混ざった場合は、そのまま表示せず1回だけ出し直させる
+        if (!leakRetried && looksLikeThoughtLeak(text)) {
+          leakRetried = true;
+          console.warn('思考メモの混入を検出したため再生成します:', text.slice(0, 80));
+          currentContents.push({ role: 'user', parts: [{ text:
+            '（システム）直前の出力に内部の思考メモが混ざっていました。返答の本文だけを、人格・口調のまま、返信候補タグを付けて出し直してください。' }] });
+          continue;
+        }
         loop = false;
-        finalReply = parts.map(p => p.text || '').join('');
+        finalReply = text;
       }
     }
     if (!finalReply && !failReason) failReason = 'ツール往復が上限に達しました';
     
     if (thinking) thinking.classList.remove('thinking');
     if (finalReply) {
-      showAiReply(finalReply);
+      showAiReply(finalReply, { speak: true });
       // 履歴にはタグ付きの原文を残す（再表示時に buildVnPages / extractReplyChips が取り除く）
       chatHistory.push({ role: 'assistant', content: finalReply });
       saveCurrentSession();
@@ -792,6 +831,7 @@ ${typeof PersonaState !== 'undefined' ? PersonaState.promptGuide() : ''}
 
 function clearChat() {
   chatHistory = [];
+  if (typeof CounselMode !== 'undefined') CounselMode.reset();
   if (currentSession) { currentSession.messages = []; saveCurrentSession(); }
   vnBacklog = [];
   renderVnBacklog();

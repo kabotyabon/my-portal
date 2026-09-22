@@ -1,0 +1,57 @@
+/* アバター一覧（avatars.html）専用スタイル。ポータル本体の CSS には依存しない */
+:root {
+  --bg-color: #241A2A;
+  --panel-bg: rgba(58, 42, 60, 0.85);
+  --accent-color: #d6988f;
+  --text-color: #f8f1f0;
+  --muted-color: #b9a6b3;
+  --border-color: rgba(255, 255, 255, 0.12);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif; background: var(--bg-color); color: var(--text-color); }
+.app-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; background: var(--panel-bg); border-bottom: 1px solid var(--border-color); }
+.app-title { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+.app-badge { font-size: 0.72rem; padding: 2px 8px; border-radius: 99px; background: var(--accent-color); color: #2a1a1f; }
+.icon-btn { padding: 7px 12px; color: var(--text-color); text-decoration: none; font-size: 0.85rem; border: 1px solid var(--border-color); border-radius: 8px; }
+.icon-btn:hover { border-color: var(--accent-color); }
+
+
+
+.roster-main { width: 100%; max-width: 960px; margin-inline: auto; padding: 20px 16px 32px; display: flex; flex-direction: column; gap: 20px; }
+.roster-status { color: var(--muted-color); font-size: 0.9rem; }
+.roster-status.error { color: #f87171; }
+
+.roster-viewer { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+.roster-viewer[hidden] { display: none; }
+.roster-stage { position: relative; aspect-ratio: 1 / 1; background: #cfd6e2; border-radius: 8px; overflow: hidden; }
+.roster-stage img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.roster-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(0, 0, 0, 0.2); }
+.roster-bar i { display: block; height: 100%; width: 0; background: var(--accent-color); }
+
+.roster-info { display: flex; flex-direction: column; gap: 12px; justify-content: center; min-width: 0; }
+.roster-index { color: var(--muted-color); font-variant-numeric: tabular-nums; }
+.roster-index b { color: var(--text-color); font-size: 1.6rem; font-weight: 600; }
+.roster-name { font-family: ui-monospace, Consolas, monospace; font-size: 1.1rem; font-weight: 500; word-break: break-all; }
+.roster-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+.roster-tag { font-size: 0.75rem; padding: 2px 9px; border: 1px solid var(--border-color); border-radius: 99px; color: var(--muted-color); }
+.roster-tag.live { color: #4ade80; border-color: #4ade80; }
+.roster-label { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted-color); }
+.roster-idbox { display: flex; gap: 8px; flex-wrap: wrap; }
+.roster-idbox input { flex: 1 1 200px; min-width: 0; padding: 9px 10px; font: 0.9rem ui-monospace, Consolas, monospace; color: var(--text-color); background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 6px; }
+.roster-ctrl { display: flex; gap: 8px; flex-wrap: wrap; }
+.roster-hint { font-size: 0.78rem; color: var(--muted-color); }
+
+.roster-btn { padding: 9px 14px; font: inherit; color: var(--text-color); background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; }
+.roster-btn:hover { border-color: var(--accent-color); }
+.roster-btn.primary { background: var(--accent-color); color: #06121d; border-color: var(--accent-color); font-weight: 700; }
+.roster-btn:focus-visible, .roster-idbox input:focus-visible, .roster-th:focus-visible { outline: 2px solid var(--accent-color); outline-offset: 2px; }
+
+.roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+.roster-th { position: relative; padding: 0; aspect-ratio: 1 / 1; overflow: hidden; background: #cfd6e2; border: 2px solid transparent; border-radius: 6px; cursor: pointer; }
+.roster-th img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0.7; }
+.roster-th[aria-current="true"] { border-color: var(--accent-color); }
+.roster-th[aria-current="true"] img { opacity: 1; }
+.roster-th .n { position: absolute; left: 4px; bottom: 3px; font: 0.68rem ui-monospace, Consolas, monospace; background: rgba(15, 23, 42, 0.75); color: #fff; padding: 0 4px; border-radius: 2px; }
+.roster-th.live::after { content: ""; position: absolute; right: 5px; top: 5px; width: 9px; height: 9px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85); }
+
+@media (max-width: 640px) { .roster-viewer { grid-template-columns: 1fr; } }

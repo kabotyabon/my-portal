@@ -1,0 +1,49 @@
+/* Perxona 3D アバター層（panel-ai.html の #vn-3d-layer）と関連 UI */
+
+/* 3D 層は立ち絵と同じ z2。初期化が成功するまでは何も表示しない（2D の立ち絵が舞台に立つ） */
+.vn-3d-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: none;
+  pointer-events: none;   /* 台詞ボックスのタップ（advanceVnText）を妨げない */
+}
+.vn-stage.is-3d .vn-3d-layer,
+.vn-stage.is-3d-loading .vn-3d-layer { display: block; }
+
+/* 3D の準備中は立ち絵を出さない（旧来の画像が一瞬映るのを防ぐ）。Ready で 3D、失敗で立ち絵へ */
+.vn-stage.is-3d .vn-portrait-layer { display: none; }
+.vn-stage.is-3d-loading .vn-portrait-layer { visibility: hidden; }
+
+/* 読み込み中の目印（舞台の右上。台詞や入力に重ならない） */
+.vn-stage.is-3d-loading::after {
+  content: "3D 読み込み中…";
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  z-index: 30;
+  font-size: 11px;
+  letter-spacing: .06em;
+  color: rgba(255, 255, 255, .72);
+  background: rgba(20, 12, 26, .55);
+  padding: 3px 9px;
+  border-radius: 99px;
+  pointer-events: none;
+}
+
+/* 設定画面の Perxona セクション */
+.perxona-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.perxona-field label { font-size: 12.5px; color: var(--text-sub, inherit); }
+.perxona-field select,
+.perxona-field input[type="text"],
+.perxona-field input[type="password"] {
+  width: 100%;
+  padding: 9px 10px;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--border, rgba(127, 127, 127, .35));
+  border-radius: 8px;
+}
+.perxona-inline { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 13px; }
+.perxona-status { font-size: 12px; margin-top: 6px; min-height: 1.2em; }

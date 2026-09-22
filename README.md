@@ -2,6 +2,10 @@
 
 個人用ポータルサイトです。日記（日報）の表示・編集、メモ、AI チャット（Gemini）などの機能を提供します。タスクは `vault/task/tasks.json` でファイル管理し、AI チャットのツール経由で操作します。
 
+> **2026-09-22**: 3D アバター＋音声（[Perxona Connect Kit](https://connect.perxona.ai/)）を統合した。設定画面の「3D アバター・音声」で Publishable Key を設定すると有効になり、未設定・オフ・初期化失敗時は従来の 2D 立ち絵にフォールバックする。
+> これまで別リポジトリ（`my-portal-Perxona`）で試していたが、本体側の修正が追随しない問題があったため、この `my-portal` に統合し、以後はここを唯一の開発元とする。`my-portal-Perxona` は更新を止め、README にこちらへの案内を残す予定。
+> Perxona 固有のファイル: `portal-app/js/core/perxona-config.js` / `portal-app/js/presenter/perxona-stage.js` / `portal-app/js/ui/perxona-settings.js` / `portal-app/css/perxona.css` / `portal-app/avatars.html`（アバター一覧）。
+
 ## リポジトリ構成
 
 **アプリ（公開）とデータ（非公開）を別リポジトリに分けています**。

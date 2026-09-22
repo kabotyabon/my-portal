@@ -208,9 +208,11 @@ loadAllPartials().then(async () => {
     navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
   }
 
-  // AI チャットの Enter キー送信
+  // AI チャットの送信キー。
+  // Enter は改行に使う（日本語入力の変換確定が Enter のため、Enter 送信だと変換中に誤送信しやすい）。
+  // 送信は Ctrl+Enter / Cmd+Enter のみ。PC・モバイルとも送信ボタンから送れる。
   byId('chat-input')?.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); sendChat(); }
   });
 
   // data/portal-config.json を読み込む

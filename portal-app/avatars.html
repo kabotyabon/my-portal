@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perxona アバター一覧</title>
+  
+  <link rel="stylesheet" href="css/roster.css">
+</head>
+<body class="roster-page">
+
+  <header class="app-header">
+    <div class="app-title">
+      <span>アバター一覧</span>
+      <span class="app-badge" id="roster-count">-</span>
+    </div>
+    <div class="header-actions">
+      <a class="icon-btn" href="index.html">← ポータルへ戻る</a>
+    </div>
+  </header>
+
+  <main class="roster-main">
+    <p id="roster-status" class="roster-status" role="status">読み込み中...</p>
+
+    <section id="roster-viewer" class="roster-viewer" hidden>
+      <div class="roster-stage">
+        <img id="roster-img" alt="">
+        <div class="roster-bar"><i id="roster-prog"></i></div>
+      </div>
+      <div class="roster-info">
+        <div class="roster-index"><b id="roster-cur">1</b> / <span id="roster-tot">0</span></div>
+        <h2 id="roster-name" class="roster-name"></h2>
+        <div id="roster-tags" class="roster-tags"></div>
+        <label class="roster-label" for="roster-id">Avatar ID</label>
+        <div class="roster-idbox">
+          <input id="roster-id" type="text" readonly>
+          <button id="roster-copy" class="roster-btn" type="button">IDをコピー</button>
+        </div>
+        <button id="roster-use" class="roster-btn primary" type="button">このアバターを使う</button>
+        <span id="roster-msg" class="roster-hint" aria-live="polite"></span>
+        <div class="roster-ctrl">
+          <button id="roster-prev" class="roster-btn" type="button">◀ 前</button>
+          <button id="roster-play" class="roster-btn" type="button">⏸ 一時停止</button>
+          <button id="roster-next" class="roster-btn" type="button">次 ▶</button>
+        </div>
+        <span class="roster-hint">← → で移動 / スペースで再生・停止（5 秒ごとに自動切替）</span>
+      </div>
+    </section>
+
+    <section id="roster-grid" class="roster-grid" aria-label="全アバター"></section>
+  </main>
+
+  <script src="js/core/perxona-config.js"></script>
+  <script src="js/roster/avatar-roster.js"></script>
+</body>
+</html>

@@ -248,7 +248,7 @@ window.ReplyFeedback = {
    * @param {Array<{role: string, content: string}>} history chatHistory
    * @returns {string} システムプロンプトへ足すブロック（傾向が出ていなければ空文字）
    */
-  promptGuide(history = []) {
+  promptGuide(history = [], opts = {}) {
     const lines = [];
 
     const t = this.tally();
@@ -256,7 +256,8 @@ window.ReplyFeedback = {
       const ratio = k => t[k] / t.total;
       lines.push(`直近${t.total}回のユーザーの反応: 会話を閉じる返信 ${t.close} / 掘り下げる返信 ${t.more} / 候補を使わず自分で入力 ${t.free} / その他 ${t.other}`);
 
-      if (ratio('close') >= 0.5) {
+      // 相談モード中は「2文以内」への自動短縮を止める（深掘りが2往復で終わる原因になる）
+      if (ratio('close') >= 0.5 && !opts.relaxLength) {
         lines.push('- 「ありがとう」で終わることが多い。返答は2文以内に収め、励ましは最後の1文だけにする。前置きと言い換えの繰り返しをやめる。');
       }
       if (ratio('more') >= 0.35) {
@@ -275,6 +276,21 @@ window.ReplyFeedback = {
       .filter(Boolean);
     if (openings.length) {
       lines.push(`- 直近の返答の書き出し: ${openings.map(o => `「${o}」`).join(' ')}。同じ入り方・同じ定型句を続けて使わない。`);
+    }
+
+    // 同じ締めの反復（「ゆっくり休んでな」「いつでも話してな」等）も止める。
+    // 2026-09 の会話ログで、書き出しは散らばっていても締めがほぼ固定だった（persona の禁止指示だけでは残った）。
+    const closings = history
+      .filter(m => m.role === 'assistant' || m.role === 'model')
+      .slice(-3)
+      .map(m => {
+        const t = String(m.content || '').replace(/\[[^\]]*\]/g, '').trim();
+        const sentences = t.split(/(?<=[。！？!?\n])/).map(s => s.trim()).filter(Boolean);
+        return (sentences[sentences.length - 1] || '').slice(-14);
+      })
+      .filter(Boolean);
+    if (closings.length) {
+      lines.push(`- 直近の返答の締め: ${closings.map(o => `「…${o}」`).join(' ')}。似た言い回しで締めない。用件に触れた言葉で終えるか、締めの言葉なしで終える。`);
     }
 
     // 禁止語は2段構え（ADR 045）。

@@ -96,6 +96,8 @@ window.AvatarScene = {
     this._loaded = true;
     // 初回だけはクロスフェードで出す（immediate だと立ち絵が唐突に現れる）
     this.apply({ fade: true });
+    // マニフェスト確定後に 3D を起動する（mount() は確定前に return するため、ここでも呼ぶ）
+    this.mountPerxona();
 
     this._preload();   // 残りの表情差分は待たずに先読みする
     return this.manifest;
@@ -183,10 +185,90 @@ window.AvatarScene = {
     const stage = document.querySelector('.vn-stage');
     if (!stage) return;
     this._mounted = true;
+    // 3D が有効なら、準備が終わる（または失敗して 2D へ戻る）まで立ち絵を出さない。
+    // 先に 2D を描くと、初回リロードで旧来の立ち絵が一瞬映ってから 3D に差し替わる。
+    if (typeof PerxonaConfig !== 'undefined' && PerxonaConfig.isEnabled() && this._perxona !== 'failed') {
+      stage.classList.add('is-3d-loading');
+    }
     // scene.json 確定前は描かない。ここでフォールバック（丸アイコンの avatar.png）を
     // 出すと、直後に立ち絵へ差し替わって「別画像が一瞬映る」ちらつきになる。
     if (!this._loaded) { this.load(); return; }
     this.apply();
+    this.mountPerxona();
+  },
+
+  // ---------- 3D（Perxona）----------
+  // 描画の切替先。無効・失敗のときは従来の 2D 立ち絵のまま何も変わらない（フォールバック）。
+
+  _perxona: 'idle',   // idle | loading | ready | failed
+
+  /** 3D 層を初期化する。有効かつ Key があるときだけ動き、多重初期化はしない。 */
+  mountPerxona() {
+    const stage = document.querySelector('.vn-stage');
+    const layer = document.getElementById('vn-3d-layer');
+    if (!stage || !layer || typeof PerxonaConfig === 'undefined' || typeof PerxonaStage === 'undefined') return;
+
+    if (!PerxonaConfig.isEnabled()) { this.unmountPerxona(); return; }
+    // 同じ DOM に初期化済み／読み込み中なら何もしない
+    if (this._perxona === 'loading') return;
+    if (this._perxona === 'ready' && PerxonaStage.presenterEl && layer.contains(PerxonaStage.presenterEl)) {
+      stage.classList.remove('is-3d-loading');
+      stage.classList.add('is-3d');
+      return;
+    }
+
+    this._perxona = 'loading';
+    stage.classList.add('is-3d-loading');
+    stage.classList.remove('is-3d');
+
+    PerxonaStage.init(layer, {
+      onFail: (reason) => this._perxonaFailed(reason)
+    }).then((ok) => {
+      stage.classList.remove('is-3d-loading');
+      if (!ok) return;   // 失敗は onFail 側で処理済み
+      this._perxona = 'ready';
+      stage.classList.add('is-3d');
+    });
+  },
+
+  /** 3D をやめて 2D へ戻す（設定でオフにしたとき） */
+  unmountPerxona() {
+    const stage = document.querySelector('.vn-stage');
+    const layer = document.getElementById('vn-3d-layer');
+    if (stage) stage.classList.remove('is-3d', 'is-3d-loading');
+    if (layer) layer.innerHTML = '';
+    if (typeof PerxonaStage !== 'undefined') { PerxonaStage.interrupt(); PerxonaStage.presenterEl = null; PerxonaStage.isReady = false; }
+    this._perxona = 'idle';
+  },
+
+  /** 設定変更後に 3D を作り直す */
+  remountPerxona() {
+    this.unmountPerxona();
+    this.mountPerxona();
+  },
+
+  _perxonaFailed(reason) {
+    this._perxona = 'failed';
+    const stage = document.querySelector('.vn-stage');
+    if (stage) stage.classList.remove('is-3d', 'is-3d-loading');
+    // 会話ログ（logChatFailure）は「返答を作れなかった」専用の書式のため使わない
+    this._perxonaError = reason;
+    console.warn('[AvatarScene] 3D の初期化に失敗したため 2D 表示に戻します:', reason);
+    document.dispatchEvent(new CustomEvent('perxona-failed', { detail: { reason } }));
+  },
+
+  /** 3D が有効なとき、返答を音声つきで喋らせる（表情・候補タグ除去済みの本文を渡すこと） */
+  speak(text) {
+    if (this._perxona !== 'ready' || typeof PerxonaStage === 'undefined') return;
+    const t = String(text || '').trim();
+    if (!t) return;
+    PerxonaStage.interrupt();
+    PerxonaStage.present(t);
+  },
+
+  /** ユーザー操作の直後に呼ぶ。応答待ちの後では自動再生制限を解除できない。 */
+  unlockAudio() {
+    if (typeof PerxonaStage !== 'undefined') PerxonaStage.unlockAudio();
   },
 
   /**
