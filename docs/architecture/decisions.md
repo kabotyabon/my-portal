@@ -71,5 +71,7 @@
 | 2026-09-13 | AIアバター強化に Perxona Connect Kit を採用する方針で計画書を起草（docs/plans/perxona-integration.md）。作業は Codespaces / 別PC で行い、メインPCに外部キットを入れない | persona / plans |
 | 2026-09-22 | Perxona Connect Kit の3D・音声統合が完了。設定画面のグローバルトグルとして実装（パック仕様v2の renderer 切替は不採用） | persona |
 | 2026-09-22 | 完了した計画書 docs/plans/perxona-integration.md を削除し persona.md へ統合。試作用リポジトリ my-portal-Perxona のローカルクローンを削除（GitHub 上のリポジトリ自体は残置） | README / persona |
+| 2026-09-23 | 「日記を含める」「ナレッジを含める」チェックボックスを廃止し、日記・タスク・ナレッジ索引・アプリ概要を常時送信に変更。ナレッジ索引は本文1行目つきに強化 | conversation |
+| 2026-09-23 | 旧ADR番号の引用タグ（(旧ADR-XXX)）をドキュメント・コードコメントから削除。以後、旧ADR番号を根拠として参照しない | README 他 |
 
 以後、決定のたびにこの表へ1行追記する（新しい行を末尾に）。

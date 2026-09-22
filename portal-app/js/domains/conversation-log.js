@@ -1,5 +1,5 @@
 /**
- * ConversationLog — アバターとの会話を逐次・全文で記録する（ADR-035 決定事項2）
+ * ConversationLog — アバターとの会話を逐次・全文で記録する
  *
  * 方針:
  *   - 要約しない。表示した発話をそのまま追記する。
@@ -41,7 +41,7 @@ window.ConversationLog = {
    * 発話を1件キューに積む（送信はしない）。
    * @param {{role: 'user'|'ai', text: string, speaker?: string, expression?: string,
    *          feedback?: 'close'|'more'|'free'|'other', sessionId?: string, sessionTitle?: string}} entry
-   *   feedback はユーザー発話の評価種別（ADR-041 決定6）。AI 発話では使わない。
+   *   feedback はユーザー発話の評価種別。AI 発話では使わない。
    */
   enqueue(entry) {
     if (!entry || !entry.text || !String(entry.text).trim()) return;
@@ -107,7 +107,7 @@ window.ConversationLog = {
   /**
    * 1日分のログへ追記する。
    *
-   * 読んでから書くまでの間に他端末が書き込むと、以前は古い内容で静かに上書きしていた（ADR-043）。
+   * 読んでから書くまでの間に他端末が書き込むと、以前は古い内容で静かに上書きしていた。
    * いまは「読んだときの SHA」で照合させ、拒否されたら**読み直して組み立て直す**。
    * 組み立てを丸ごとやり直すのが要点で、同じ本文を再送しても取りこぼしは救えない。
    */
@@ -120,7 +120,7 @@ window.ConversationLog = {
 
       const body = existing
         ? existing.content.replace(/\s*$/, '')
-        : `# ${date} アバター会話ログ\n\n> 要約せず、発話をそのまま時系列で記録しています（ADR-035）。`;
+        : `# ${date} アバター会話ログ\n\n> 要約せず、発話をそのまま時系列で記録しています。`;
 
       // 試行ごとに同じ基準から組み立て直す（前回試行の値を持ち越さない）
       let lastSession = localStorage.getItem(CONV_SESSION_KEY) || '';

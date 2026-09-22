@@ -62,7 +62,7 @@ window.DiaryService = {
 
   /**
    * 過去の日記を統合する（AI用）
-   * 当月の日別ファイルと、年ディレクトリ内の月次まとめの両方を対象にする（ADR-035 決定事項3）
+   * 当月の日別ファイルと、年ディレクトリ内の月次まとめの両方を対象にする
    */
   async getMergedJournal(days = 7) {
     const targets = (await DiaryRepository.listEntries(days)).reverse();
@@ -78,7 +78,7 @@ window.DiaryService = {
   },
 
   /**
-   * 指定した月の日別ファイルを 1つの月次まとめへ統合する（ADR-035 決定事項3）
+   * 指定した月の日別ファイルを 1つの月次まとめへ統合する
    *
    *   vault/diary/2026-06-01.md, 2026-06-02.md, …
    *     → vault/diary/2026/2026-06.md（`# 2026年6月` + `## 2026年6月D日` + `---`）

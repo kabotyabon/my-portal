@@ -34,7 +34,7 @@ window.ConfigService = {
       };
       this.data = merged;
 
-      // 実質差分がある場合のみ保存する（ADR-033 決定事項6）
+      // 実質差分がある場合のみ保存する
       // 無条件に保存すると毎回「⚙️ 設定同期と補完」コミットが発生してしまう
       if (this._stableStringify(merged) !== this._stableStringify(config)) {
         try {

@@ -61,7 +61,7 @@ body.theme-companion {
   --accent-check:  #e8b6ae;
   --dot:           #f2cfc9;
 
-  /* AvatarScene が上書きする舞台変数（表情に連動 / ADR-035） */
+  /* AvatarScene が上書きする舞台変数（表情に連動） */
   --stage-bg:        linear-gradient(180deg, #3a2a3c 0%, #241a2a 48%, #150e1a 100%);
   --stage-glow:      rgba(214, 152, 143, .32);
   --portrait-filter: none;

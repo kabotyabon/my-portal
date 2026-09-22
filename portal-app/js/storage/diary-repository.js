@@ -36,7 +36,7 @@ window.DiaryRepository = {
     return await GitHubStorage.saveFile(path, content, message);
   },
 
-  /** 月次まとめのパス（暦年ディレクトリ配下 / ADR-035 決定事項3） */
+  /** 月次まとめのパス（暦年ディレクトリ配下） */
   monthlyPath(yearMonth) {
     return `vault/diary/${yearMonth.slice(0, 4)}/${yearMonth}.md`;
   },

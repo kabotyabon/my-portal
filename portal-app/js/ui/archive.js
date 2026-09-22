@@ -1,16 +1,15 @@
 /**
  * 日記アーカイブ／ナレッジ閲覧パネル
- * ADR-033 決定事項4
  *
  * vault/diary・vault/knowledge のファイル一覧を出し、クリックで開いて編集・保存する。
- * 表示中のディレクトリへの新規ファイル追加もここで行う（ADR-039）。
+ * 表示中のディレクトリへの新規ファイル追加もここで行う。
  * 編集・保存の実体は js/ui/file-editor.js の汎用コンポーネント。
  */
 
 const ARCHIVE_ROOTS = [
   { key: 'diary',     label: '📔 日記',     path: 'vault/diary' },
   { key: 'knowledge', label: '📚 ナレッジ', path: 'vault/knowledge' },
-  // ユーザー像と観察ログ（ADR-052）。プロンプトに載る内容なので、目で見て直せる場所が要る
+  // ユーザー像と観察ログ。プロンプトに載る内容なので、目で見て直せる場所が要る
   { key: 'persona',   label: '🧠 記憶',     path: 'vault/persona-state' }
 ];
 
@@ -74,7 +73,7 @@ async function loadArchiveList(dirPath) {
   try {
     const entries = await GitHubStorage.listFiles(dirPath);
 
-    // 年ディレクトリ（2026 など）は新しい年を上に、それ以外は名前昇順（ADR-035 決定事項3）
+    // 年ディレクトリ（2026 など）は新しい年を上に、それ以外は名前昇順
     const isYearDir = name => /^\d{4}$/.test(name);
     const dirs = entries
       .filter(e => e.type === 'dir')
@@ -126,7 +125,7 @@ async function loadArchiveList(dirPath) {
   }
 }
 
-/* ========== 新規ファイル追加（ADR-039） ========== */
+/* ========== 新規ファイル追加 ========== */
 
 /** 追加行のプレースホルダを、表示中のディレクトリに合わせて書き換える */
 function renderArchiveAddRow() {
@@ -160,7 +159,7 @@ function normalizeArchiveName(raw) {
 }
 
 /**
- * 新規ファイルの雛形。日付・年月のファイル名は日記の見出し規約に合わせる（ADR-035）。
+ * 新規ファイルの雛形。日付・年月のファイル名は日記の見出し規約に合わせる。
  */
 function archiveNewFileTemplate(name) {
   const base = name.replace(/\.md$/i, '').split('/').pop();

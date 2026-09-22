@@ -1,6 +1,5 @@
 /**
  * File Editor（対象パス可変の汎用 Markdown ビューア／エディタ）
- * ADR-033 決定事項4
  *
  * report.js は「当日の日記」専用（reportContent / reportSha / DiaryService に密結合）だったため、
  * レンダリング・編集・保存のロジックだけを任意パスに対して使えるよう一般化したもの。
@@ -55,7 +54,7 @@ window.createFileEditor = function createFileEditor(opts) {
     },
 
     /**
-     * すでに手元にある内容でエディタを開く（ADR-039）。
+     * すでに手元にある内容でエディタを開く。
      * 作成直後は GitHub Contents API の反映が遅れて getFile が 404 を返すことがあるため、
      * 書き込んだ内容をそのまま渡して開けるようにしている。
      */

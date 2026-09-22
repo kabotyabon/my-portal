@@ -1,4 +1,4 @@
-<!-- 日記パネル（初期表示は対話パネル / ADR-033 決定事項3） -->
+<!-- 日記パネル（初期表示は対話パネル） -->
 <div id="main-panel-report" class="is-hidden">
 
   <p class="sheet-date" id="report-date-label"></p>
@@ -20,10 +20,10 @@
   </div>
   <div id="regen-status" class="is-hidden" style="font-size:12px;color:var(--text-faint);margin-bottom:10px;"></div>
 
-  <!-- AI振り返り（単発・軽量。押すと日記へ自動保存される / ADR-033 決定事項2） -->
+  <!-- AI振り返り（単発・軽量。押すと日記へ自動保存される） -->
   <div class="reflect-card" style="margin-bottom:14px;">
     <div class="reflect-card-head">
-      <!-- src は persona-loaded 後に report.js が入れる（使用中ペルソナに追従させるため / ADR-040） -->
+      <!-- src は persona-loaded 後に report.js が入れる（使用中ペルソナに追従させるため） -->
       <img class="reflect-card-avatar" id="reflect-avatar" src="" alt="">
       <span>振り返り</span>
       <span style="flex:1;"></span>
@@ -37,7 +37,7 @@
     <button class="btn-primary block" id="ai-reflection-btn" onclick="requestAiReflection()">振り返りをリクエスト</button>
   </div>
 
-  <!-- 気分・感情ログ（出来事ごとに蓄積 / ADR-033 決定事項5） -->
+  <!-- 気分・感情ログ（出来事ごとに蓄積） -->
   <details style="margin-bottom:14px;">
     <summary style="font-size:12.5px;color:var(--text-sub);cursor:pointer;font-weight:700;">気分を記録する</summary>
     <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">

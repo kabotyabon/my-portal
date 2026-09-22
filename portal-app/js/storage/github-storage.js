@@ -13,9 +13,9 @@ window.GitHubAuthError = GitHubAuthError;
 
 /**
  * 楽観的ロックの照合に失敗した（＝読んでから書くまでの間に他所で更新された）。
- * `saveFile()` に `baseSha` を渡したときだけ投げる（ADR-043）。
+ * `saveFile()` に `baseSha` を渡したときだけ投げる。
  * 呼び出し側は「読み直して組み立て直す」ことが期待されている。
- * 黙ってリトライしてはいけない——それをやったのが ADR-043 の不具合そのもの。
+ * 黙ってリトライしてはいけない——それをやったのが過去に会話ログの発話を消した不具合の正体。
  */
 class GitHubConflictError extends Error {
   constructor(message) {
@@ -94,7 +94,7 @@ window.GitHubStorage = {
    *
    * 既定では、書き込み直前に最新 SHA を取り直して送る（＝必ず通る上書き）。
    * `opts.baseSha` を渡すと**楽観的ロック**になり、読んだ時点から中身が変わっていれば
-   * GitHub が拒否し、`GitHubConflictError` を投げる（ADR-043）。
+   * GitHub が拒否し、`GitHubConflictError` を投げる。
    *
    * @param {string} path - 保存先のパス
    * @param {string} content - 内容
@@ -116,7 +116,7 @@ window.GitHubStorage = {
       let sha;
       if (useBaseSha) {
         // 呼び出し側が「読んだときの SHA」を持っている。取り直さない。
-        // 取り直すと照合が必ず通ってしまい、古い内容で静かに上書きする（ADR-043 の不具合）。
+        // 取り直すと照合が必ず通ってしまい、古い内容で静かに上書きしてしまう。
         sha = opts.baseSha || undefined;
       } else {
         // 既定の挙動: 毎回最新の SHA を取得（リトライ時も含む）
@@ -148,7 +148,7 @@ window.GitHubStorage = {
         error.status = res.status;
         throw error;
       }
-      // 書き込み前の SHA を添えて返す（ADR-044）。
+      // 書き込み前の SHA を添えて返す。
       // GitHub は内容が同一でも 200 と commit を返す（＝空コミットができる）ため、
       // 「commit が返ったか」だけでは中身が変わったか判別できない。
       // blob の SHA は内容が同じなら変わらないので、呼び出し側はこれと突き合わせる。
@@ -186,7 +186,7 @@ window.GitHubStorage = {
   },
 
   /**
-   * ファイルを削除する（日記の月次まとめで日別ファイルを畳むときに使う / ADR-035）
+   * ファイルを削除する（日記の月次まとめで日別ファイルを畳むときに使う）
    * @param {string} path - 削除対象のパス
    * @param {string} message - コミットメッセージ
    * @returns {Promise<boolean>} 削除したら true、存在しなければ false

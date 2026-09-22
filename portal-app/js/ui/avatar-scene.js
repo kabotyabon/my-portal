@@ -1,5 +1,5 @@
 /**
- * AvatarScene — アバターの表情差分と背景を管理する（ADR-035）
+ * AvatarScene — アバターの表情差分と背景を管理する
  *
  * 責務:
  *   1. 使用中ペルソナの scene.json（マニフェスト）の読み込みと既定値の解決
@@ -21,7 +21,7 @@
  * 背景設定が mood のときは bg も表情に追従し、具体的な背景を選ぶとそちらが優先される。
  */
 
-// 使用中のペルソナ一式の置き場。定義は js/core/config.js（ADR-040）。
+// 使用中のペルソナ一式の置き場。定義は js/core/config.js。
 // このファイルが config.js より先に読まれる構成でも壊れないよう既定値を持たせる。
 const PERSONA_BASE       = (typeof PERSONA_DIR !== 'undefined' ? PERSONA_DIR : 'assets/persona/');
 const SCENE_MANIFEST_URL = `${PERSONA_BASE}scene.json`;

@@ -76,6 +76,6 @@
     }
   ],
 
-  "_postHistoryNote": "会話履歴の後ろに置く指示。前に置くより強く効くため、破られやすい規律をここへ移す余地がある（ADR-041/044/046 の実測と、Character Card V2 の post_history_instructions が同じ知見）。現状は未使用。",
+  "_postHistoryNote": "会話履歴の後ろに置く指示。前に置くより強く効くため、破られやすい規律をここへ移す余地がある（実測と、Character Card V2 の post_history_instructions が同じ知見）。現状は未使用。",
   "postHistory": []
 }

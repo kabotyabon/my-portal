@@ -9,16 +9,16 @@ window.getRepo = getRepo;
 window.getBranch = getBranch;
 
 // =====================
-// ペルソナ（ADR-040）
+// ペルソナ
 // =====================
 // 使用中のアバター一式（card.json / scene.json / avatar.png / expressions/）の置き場。
 // 静的サイトはディレクトリ一覧を取得できないため、読む場所は 1つに固定する。
 //
-// ADR-048: vault は private リポジトリへ分離したため、Pages から相対 fetch できるのは
-// この公開リポジトリ内のファイルだけになった。ペルソナ一式は portal-app/assets/persona/ に置く。
+// vault は private リポジトリへ分離しているため、Pages から相対 fetch できるのは
+// この公開リポジトリ内のファイルだけになる。ペルソナ一式は portal-app/assets/persona/ に置く。
 // 公開面に出るので、著作物に依拠しないオリジナルのペルソナのみを配置すること。
 //
-// 切り替えは assets/ 配下のディレクトリをリネームして行う（ADR-040 の規約は据え置き）:
+// 切り替えは assets/ 配下のディレクトリをリネームして行う:
 //   git mv portal-app/assets/persona portal-app/assets/_persona-old
 //   git mv portal-app/assets/_persona-new portal-app/assets/persona
 // `_` で始まるディレクトリはパスが一致しないので読まれない

@@ -1,5 +1,5 @@
 <!--
-  対話（Talk）パネル — 起動時の標準TOP（ADR-033 決定事項3 / Ambient Companion 改修）
+  対話（Talk）パネル — 起動時の標準TOP（Ambient Companion 改修）
   舞台（.vn-stage）が地になり、会話ログ・台詞ボックス・返信候補・入力バーはすべてその上のレイヤー。
   レイヤー順は z-index で表現する: 背景 0 / グロー 1 / 立ち絵 2 / スクリム 3 /
   会話ログ 20 / 台詞 25 / 返信候補 26 / 添付チップ 27 / セッションピル 28 / 入力バー 40
@@ -57,8 +57,6 @@
 
       <!-- z36: 会話オプション（スマホでは ≡ のメニューとして開く） -->
       <div class="chat-options" id="chat-options">
-        <label class="chat-opt"><input type="checkbox" id="include-report">日記を含める</label>
-        <label class="chat-opt"><input type="checkbox" id="include-knowledge">ナレッジを含める</label>
         <button class="chat-opt-btn" onclick="promptFileAttach()">添付</button>
         <button class="chat-opt-btn" onclick="requestDiaryWrite()" title="今の話を今日の日記に書いてもらう">📝 日記に書く</button>
         <button class="chat-opt-btn" onclick="clearChat()">クリア</button>

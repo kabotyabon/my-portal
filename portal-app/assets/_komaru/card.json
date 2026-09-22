@@ -1,7 +1,7 @@
 {
   "spec": "portal-persona",
   "specVersion": 1,
-  "_note": "控えの人格。使用中に切り替えるときは assets/persona/ とディレクトリ名を入れ替える（ADR-040）。",
+  "_note": "控えの人格。使用中に切り替えるときは assets/persona/ とディレクトリ名を入れ替える。",
 
   "id": "komaru",
   "language": "ja",

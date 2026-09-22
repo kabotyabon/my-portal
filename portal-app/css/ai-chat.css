@@ -12,7 +12,7 @@
   height: auto;
 }
 
-/* ===== ステージ（背景 z0 / グロー z1 / 立ち絵 z2 / スクリム z3）ADR-035 ===== */
+/* ===== ステージ（背景 z0 / グロー z1 / 立ち絵 z2 / スクリム z3） ===== */
 .vn-portrait-area {
   width: 100%;
   overflow: hidden;

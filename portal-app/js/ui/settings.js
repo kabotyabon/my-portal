@@ -9,7 +9,7 @@ window.TOKEN_KEY  = TOKEN_KEY;
 window.GEMINI_KEY = GEMINI_KEY;
 
 // ---- 基本取得関数 ----
-// ADR-033 決定事項7 のパスフレーズ暗号化（SecureStore）は 2026-08-08 に廃止した。
+// パスフレーズ暗号化（SecureStore）は 2026-08-08 に廃止した。
 // 起動のたびに解錠を求める運用が続かないため、改善ではなく機能ごと外している。
 // もともと XSS への防御にはなっておらず、守れていたのは「端末放置時に
 // ストレージビューアから平文を読まれる」場合だけだった。
@@ -49,7 +49,7 @@ function getGeminiKey() { return _readKey(GEMINI_KEY); }
 window.getToken     = getToken;
 window.getGeminiKey = getGeminiKey;
 
-// ---- AI Persona (PERSONA_DIR の card.json から読む / ADR-040) ----
+// ---- AI Persona (PERSONA_DIR の card.json から読む) ----
 // window.AI_PERSONA = { name, userCallName, avatarUrl, greeting, avoidWords, intro, sections, postHistory }
 // は app.js の初期化時にセット済み。
 // avatarUrl は任意。省略時はペルソナディレクトリの avatar.png を使う（セットを持ち運べるようにするため）
@@ -83,7 +83,7 @@ function initSettingsTab() {
   if (statusEl) statusEl.textContent = '';
 }
 
-// ---- 返信候補から拾ったフィードバック（ADR-038） ----
+// ---- 返信候補から拾ったフィードバック ----
 function renderReplyFeedbackTally() {
   const el = document.getElementById('reply-feedback-tally');
   if (!el || typeof ReplyFeedback === 'undefined') return;
@@ -231,7 +231,7 @@ window.testGeminiKey = async function() {
   }
   if (statusEl) statusEl.textContent = '⏳ テスト中...';
   try {
-    // キーはヘッダーで送る（ADR-033 決定事項7）。モデルは gemini.js の定義に合わせる
+    // キーはヘッダーで送る。モデルは gemini.js の定義に合わせる
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${window.GEMINI_MODEL}:generateContent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },

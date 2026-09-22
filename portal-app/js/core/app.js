@@ -243,8 +243,8 @@ loadAllPartials().then(async () => {
         // v1 のランタイム注入文（表情タグ案内等）は日本語のみで、この値はまだ参照しない。
         language: card.language || 'ja',
         avatarUrl: card.avatarUrl,   // 任意。省略時は PERSONA_DIR の avatar.png
-        greeting: card.greeting,     // 起動時の挨拶（口調は人格に属する / ADR-040）
-        // この人格が使ってはいけない語。返答を機械的に照合するために持つ（ADR-044）。
+        greeting: card.greeting,     // 起動時の挨拶（口調は人格に属する）
+        // この人格が使ってはいけない語。返答を機械的に照合するために持つ。
         // 本文に「使わない」と書くだけでは守られないため、宣言を機械可読にしてある。
         avoidWords: Array.isArray(card.avoidWords) ? card.avoidWords : [],
         intro:       card.intro || '',
@@ -257,7 +257,7 @@ loadAllPartials().then(async () => {
   } catch (e) {
     console.warn('card.json の読み込みに失敗しました:', e);
   }
-  // scene.json（表情差分・背景の定義）をロードする（ADR-035）
+  // scene.json（表情差分・背景の定義）をロードする
   // persona.md の avatarUrl をフォールバック画像に使うため、必ず persona 読み込みの後に行う。
   if (typeof AvatarScene !== 'undefined') {
     await AvatarScene.load();
@@ -271,9 +271,9 @@ loadAllPartials().then(async () => {
   const token = getToken();
   if (token) {
     await ConfigService.init();
-    // 日記は裏側で先読みしておき、表示だけ対話画面を優先する（ADR-033 決定事項3）
+    // 日記は裏側で先読みしておき、表示だけ対話画面を優先する
     fetchDailyReport();
-    // 評価履歴を会話ログから復元する（端末をまたいで傾向を共有するため / ADR-044）。
+    // 評価履歴を会話ログから復元する（端末をまたいで傾向を共有するため）。
     // await しない: 対話開始までブロックさせない。間に合わなければその回は localStorage だけで判定する。
     if (typeof ReplyFeedback !== 'undefined') ReplyFeedback.loadFromVault();
     if (typeof renderAllLinks === 'function') renderAllLinks();

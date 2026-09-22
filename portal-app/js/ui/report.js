@@ -133,7 +133,7 @@ function renderCurrentTab () {
 }
 
 // =====================
-// 日記セクションの upsert / 追記（ADR-033 決定事項2・5）
+// 日記セクションの upsert / 追記
 // =====================
 
 function escapeRegExpForSection (s) {
@@ -177,7 +177,7 @@ function extractSectionBody (content, title) {
 }
 
 /**
- * AIによる振り返りを生成し、確認なしで日記へ upsert 保存する（ADR-033 決定事項2）
+ * AIによる振り返りを生成し、確認なしで日記へ upsert 保存する
  *
  * Kolb 4段階・ルーブリック数値化は採用しない（過去に4段構造そのものが負担で定着しなかった）。
  * ラベル分けしない自然な短文を1本生成し、`## AI振り返り（YYYY-MM-DD）` へ保存する。
@@ -260,7 +260,7 @@ ${note || '（なし）'}`;
 }
 
 // =====================
-// 感情ログ（ADR-033 決定事項5）
+// 感情ログ
 // =====================
 // 日単位の単一 mood タグではなく、出来事に紐づく複数エントリとして蓄積する。
 // upsert ではなく追記なので、1日に何度でも記録できる。画像・写真は対象外。
@@ -487,7 +487,7 @@ window.addEventListener('vault-file-written', e => {
   fetchDailyReport();
 });
 
-/** 振り返りカードのアイコンを使用中ペルソナの立ち絵に合わせる（ADR-040） */
+/** 振り返りカードのアイコンを使用中ペルソナの立ち絵に合わせる */
 function applyReflectAvatar() {
   const img = document.getElementById('reflect-avatar');
   if (img && typeof getAiAvatar === 'function') img.src = getAiAvatar();

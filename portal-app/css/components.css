@@ -1,4 +1,4 @@
-/* ========== メインパネル切替タブ（PC専用 / ADR-033） ========== */
+/* ========== メインパネル切替タブ（PC専用） ========== */
 .main-tabs {
   display: flex;
   gap: 4px;
@@ -33,7 +33,7 @@
   .main-tabs { display: none; }
 }
 
-/* ========== 日記アーカイブ一覧（ADR-033 決定事項4） ========== */
+/* ========== 日記アーカイブ一覧 ========== */
 .archive-list {
   display: flex;
   flex-direction: column;
@@ -57,7 +57,7 @@
 
 .archive-item:hover { background: var(--section-bg); border-color: #111; }
 
-/* 新規ファイル追加行（ADR-039）— メモの追加行と同じ見た目に揃える */
+/* 新規ファイル追加行 — メモの追加行と同じ見た目に揃える */
 .archive-add-row {
   display: flex;
   gap: 8px;

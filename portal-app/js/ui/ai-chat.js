@@ -15,7 +15,7 @@ function getTimeOfDay(date = new Date()) {
 }
 
 /**
- * 起動時の挨拶。口調は人格に属するので card.json の `greeting` から読む（ADR-040）。
+ * 起動時の挨拶。口調は人格に属するので card.json の `greeting` から読む。
  * 時間帯（朝・昼・夜）に応じた挨拶に対応。
  */
 const DEFAULT_WELCOME = {
@@ -63,7 +63,7 @@ let attachedFiles  = [];     // [{ path, content, sha }]
 const applyBlocks  = new Map(); // blockId → { path, content }
 
 // VN テキストページング
-// vnPages は { text, expression, background } の配列（ADR-035：ページ単位で表情を切り替える）
+// vnPages は { text, expression, background } の配列（ページ単位で表情を切り替える）
 let vnPages       = [];
 let vnCurrentPage = 0;
 let vnIsTyping    = false;
@@ -239,7 +239,7 @@ function showVnPage(idx) {
 
   const page = vnPages[idx] || { text: '' };
 
-  // ページに紐づく表情・背景を先に反映してから喋らせる（ADR-035）
+  // ページに紐づく表情・背景を先に反映してから喋らせる
   if (typeof AvatarScene !== 'undefined') {
     if (page.background) AvatarScene.setBackground(page.background);
     if (page.expression) AvatarScene.setExpression(page.expression);
@@ -324,14 +324,14 @@ function renderVnReplies() {
 function pickVnReply(text) {
   const input = document.getElementById('chat-input');
   if (!input) return;
-  // どの候補を選んだかを応答スタイルの評価として記録する（ADR-038）
+  // どの候補を選んだかを応答スタイルの評価として記録する
   if (typeof ReplyFeedback !== 'undefined') ReplyFeedback.record('chip', text);
   input.value = text;
   sendChat({ fromChip: true });
 }
 
 /**
- * 「📝 日記に書く」= アバターに「日記に書いて」と言う手間の省略（ADR-056）。
+ * 「📝 日記に書く」= アバターに「日記に書いて」と言う手間の省略。
  * フォームから直接書き込む方式（旧 diary-note-panel）は廃止した。
  * 何を書くかは会話の文脈から AI が決め、append_to_file で追記する。
  */
@@ -388,7 +388,7 @@ function renderChatPanel() {
   const titleEl = document.getElementById('session-title-display');
   if (titleEl) titleEl.textContent = currentSession ? currentSession.title : '新しい会話';
 
-  // 立ち絵・背景の描画は AvatarScene が担う（ADR-035）
+  // 立ち絵・背景の描画は AvatarScene が担う
   if (typeof AvatarScene !== 'undefined') AvatarScene.mount();
 
   const nameLabel = document.getElementById('vn-ai-name-label');
@@ -482,7 +482,7 @@ function renderFileChips() {
 /**
  * 返答を作れなかったときの表示。文字送りせず、失敗が起きたことを台詞ボックスに直接出す。
  * 以前は空返答（ツール往復の上限到達・空のcandidates）のとき「考えています…」のまま
- * 黙って止まり、ユーザーには何も起きていないように見えていた（ADR-056 所見）。
+ * 黙って止まり、ユーザーには何も起きていないように見えていた。
  */
 function showChatFailure(text) {
   if (typeof AvatarScene !== 'undefined') AvatarScene.setExpression('worried');
@@ -572,7 +572,7 @@ function looksLikeThoughtLeak(text) {
 /**
  * @param {{fromChip?: boolean, viaButton?: boolean}} opts
  *   fromChip:true は返信候補のタップ経由（記録済み）。
- *   viaButton:true は「📝 日記に書く」等のボタン経由（定型文なので候補評価に数えない / ADR-056）。
+ *   viaButton:true は「📝 日記に書く」等のボタン経由（定型文なので候補評価に数えない）。
  */
 async function sendChat(opts = {}) {
   // デモモードは台本（DemoScript）が答えるため API キー不要
@@ -585,7 +585,7 @@ async function sendChat(opts = {}) {
   const text  = input.value.trim();
   if (!text) return;
 
-  // 候補を使わず自分で書いた = 候補が的外れだったという評価として記録する（ADR-038）
+  // 候補を使わず自分で書いた = 候補が的外れだったという評価として記録する
   if (!opts.fromChip && !opts.viaButton && typeof ReplyFeedback !== 'undefined') ReplyFeedback.record('free', text);
 
   const btn = document.getElementById('chat-send-btn');
@@ -602,9 +602,9 @@ async function sendChat(opts = {}) {
   }
   saveCurrentSession();
 
-  // 会話ログ（要約せず全文を逐次記録 / ADR-035 決定事項2）
+  // 会話ログ（要約せず全文を逐次記録）
   // 評価種別も一緒に残す。集計は localStorage にしか無く端末を替えると消えるため、
-  // 「どの発話がどう評価されたか」を後から追えるようにしておく（ADR-041 決定6）
+  // 「どの発話がどう評価されたか」を後から追えるようにしておく
   if (typeof ConversationLog !== 'undefined' && !window.DEMO_MODE) {
     ConversationLog.enqueue({
       role: 'user',
@@ -634,9 +634,6 @@ async function sendChat(opts = {}) {
     }
     return;
   }
-
-  const includeReport = !!document.getElementById('include-report')?.checked;
-  const includeKnowledge = !!document.getElementById('include-knowledge')?.checked;
 
   const aiName = getAiName();
   const persona = getAiPrompt();
@@ -710,17 +707,15 @@ ${typeof PersonaState !== 'undefined' ? PersonaState.promptGuide() : ''}
 - get_tasks は長期バックログ（P1〜P3）用です。明示的にバックログを尋ねられた場合のみ使用してください。
 
 ## ファイル保存先の規約
-- この会話そのものは、アプリが1往復ごとに vault/conversations/YYYY-MM-DD_アバター会話.md へ全文を自動記録しています。改めて保存する必要はありません（ADR-035）。
+- この会話そのものは、アプリが1往復ごとに vault/conversations/YYYY-MM-DD_アバター会話.md へ全文を自動記録しています。改めて保存する必要はありません。
 - テーマを立てて別途まとめたい場合のみ: vault/conversations/YYYY-MM-DD_テーマ.md
 - 日記（当月・日別）: vault/diary/YYYY-MM-DD.md
 - 日記（過去月・月次まとめ）: vault/diary/YYYY/YYYY-MM.md ← 年ディレクトリの下にあります。過去の日記を探すときはまず vault/diary を list_files し、年ディレクトリ（例 2026）の中を見てください。
 - 構造化されたナレッジ・学び: vault/knowledge/
 - ファイル名の YYYY-MM-DD には上記「現在日時」の値を使い、「今日の〜」のような日付が特定できない名前は付けないでください。`;
 
-  if (includeReport || includeKnowledge) {
-    const latest = await AiService.getLatestContext({ includeKnowledge });
-    sys += `\n\n## 現在のコンテキスト\n${latest}`;
-  }
+  const latest = await AiService.getLatestContext();
+  if (latest) sys += `\n\n## 現在のコンテキスト\n${latest}`;
   
   if (attachedFiles.length > 0) {
     sys += '\n\n## 添付ファイル:';
@@ -733,7 +728,7 @@ ${typeof PersonaState !== 'undefined' ? PersonaState.promptGuide() : ''}
   }));
 
   try {
-    // この往復でどのファイルを読んだかを記録し直す（save_file の上書きガード用 / ADR-046）
+    // この往復でどのファイルを読んだかを記録し直す（save_file の上書きガード用）
     if (typeof ToolDispatcher !== 'undefined') ToolDispatcher.beginTurn();
 
     let loop = true;
@@ -795,7 +790,7 @@ ${typeof PersonaState !== 'undefined' ? PersonaState.promptGuide() : ''}
 
       const shownText = vnPagesToText(vnPages);
 
-      // 人格が宣言した禁止語を使っていないか照合する（ADR-044）。
+      // 人格が宣言した禁止語を使っていないか照合する。
       // 見つかれば次のリクエストの promptGuide() が名指しで是正する。
       if (typeof ReplyFeedback !== 'undefined') {
         const hits = ReplyFeedback.checkViolation(shownText);

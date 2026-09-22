@@ -27,7 +27,7 @@ async function callGeminiRaw(contents, systemInstruction = "", tools = null) {
   const key = getGeminiKey();
   if (!key) throw new Error('Gemini APIキーが設定されていません。');
 
-  // APIキーは URL クエリではなくヘッダーで送る（ADR-033 決定事項7）。
+  // APIキーは URL クエリではなくヘッダーで送る。
   // クエリ文字列はリファラやログに残りやすいため。
 
   // 思考トークンも maxOutputTokens の枠を消費する。
