@@ -26,8 +26,10 @@ export default {
       return new Response(null, { status: 204, headers: corsHeaders });
     }
 
-    const key = request.headers.get('X-Portal-Key');
-    if (!env.PORTAL_API_KEY || key !== env.PORTAL_API_KEY) {
+    // secret put はCLIの入力経路によって末尾に改行が混入しうるため、両辺をtrimして比較する
+    const key = (request.headers.get('X-Portal-Key') || '').trim();
+    const expected = (env.PORTAL_API_KEY || '').trim();
+    if (!expected || key !== expected) {
       return json({ message: '認証に失敗しました（X-Portal-Key が不正です）' }, 401, corsHeaders);
     }
 

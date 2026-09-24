@@ -5,7 +5,7 @@ compatibility_date = "2026-09-24"
 # knowledgenote.work は Cloudflare 管理下（2026-09-24 ネームサーバー移行済み）。
 # サブドメイン api.knowledgenote.work にこの Worker を紐付ける。
 routes = [
-  { pattern = "api.knowledgenote.work/*", custom_domain = true }
+  { pattern = "api.knowledgenote.work", custom_domain = true }
 ]
 
 [vars]

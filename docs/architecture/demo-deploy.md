@@ -35,21 +35,23 @@
 
 ブラウザの「ホーム画面に追加」でアプリとしてインストールできる（`portal-app/manifest.json`）。
 
-### 中間サーバー（Cloudflare Workers プロキシ）— コードは実装済み・アプリ側は未接続
+### 中間サーバー（Cloudflare Workers プロキシ）— デプロイ済み・アプリ側は未接続
 
 Web/モバイルの分離（モバイルはTWA→React Native、Web版はNext.js化を検討中）に伴い、
 GitHub PAT をクライアント（ブラウザ・将来のモバイルアプリ）に置けなくなるため、
-GitHubへの読み書きを中継する薄いプロキシを `worker-proxy/` に実装した。
+GitHubへの読み書きを中継する薄いプロキシを `worker-proxy/` に実装し、Cloudflareへデプロイした。
 
-- Cloudflare Workers上で動く。GitHub PATは Worker の Secret としてのみ保持し、クライアントには渡さない
-- クライアント⇄Worker間は別の合言葉（`X-Portal-Key`）で認証する（GitHub PATとは無関係）
+- Cloudflare Workers上で動く。GitHub PATは Worker の Secret（`GITHUB_PAT`）としてのみ保持し、クライアントには渡さない
+- クライアント⇄Worker間は別の合言葉（Secret `PORTAL_API_KEY`、`X-Portal-Key`ヘッダーで送る）で認証する（GitHub PATとは無関係）。
+  比較時は両辺をtrimする（`wrangler secret put`へのCLI入力経路によっては末尾に改行が混入しうるため）
 - エンドポイントは `GET/PUT/DELETE /api/vault/contents/<path>` と `POST /api/vault/dispatch/daily-report` の2系統。
   GitHub Contents APIのレスポンスをほぼ透過するだけの薄い設計（詳細は `worker-proxy/README.md`）
-- ドメイン `knowledgenote.work` を取得済み・Cloudflareへネームサーバー移行済み（2026-09-24）。
-  Workerは `api.knowledgenote.work` にカスタムドメインで紐付ける想定
-- **現状はコードとデプロイ手順が揃っただけで、実際のデプロイ（`wrangler login`/`secret put`/`deploy`）と、
-  `portal-app` 側をこのプロキシ経由に差し替える変更は未着手**。今の `portal-app` は引き続きブラウザから
-  直接GitHubを叩いており、PATはブラウザに残ったまま
+- ドメイン `knowledgenote.work` を取得・Cloudflareへネームサーバー移行済み（2026-09-24）。
+  Workerは **`api.knowledgenote.work` にカスタムドメインで紐付け済み**（デプロイ・疎通確認済み、2026-09-25）。
+  Cloudflareのカスタムドメインはワイルドカード・パス付きパターンを許可しないため、`wrangler.toml`の`routes`は
+  ホスト名のみ（`api.knowledgenote.work`、末尾に`/*`を付けない）で書くこと
+- **`portal-app` 側をこのプロキシ経由に差し替える変更はまだ未着手**。今の `portal-app` は引き続きブラウザから
+  直接GitHubを叩いており、PATはブラウザに残ったまま。プロキシ自体は疎通確認済みで、あとはアプリ側の接続変更のみ
 
 旧来の「ホスティングごとCloudflareへ移しポータルをAccessで閉じる」という構想（下記2026-08-08の変遷）とは
 **スコープを分離**した。まず「PATを隠す」ことだけを独立したWorkerで解決し、ポータル自体の配信先
@@ -57,10 +59,15 @@ GitHubへの読み書きを中継する薄いプロキシを `worker-proxy/` に
 
 ## 変遷
 
+- **2026-09-25** — 中間サーバー（`worker-proxy/`）をCloudflareへデプロイし、`api.knowledgenote.work`への
+  カスタムドメイン紐付けと疎通確認（`vault/config.json`取得）まで完了。Volta経由でNode.js/npmを導入し、
+  wranglerの依存（esbuild/sharp/workerd）のinstall scriptsを承認して環境構築。カスタムドメインの
+  `routes`にワイルドカード（`/*`）を付けるとデプロイが拒否される点、`X-Portal-Key`比較はCLI入力時の
+  改行混入に備えて両辺trimが必要だった点を実装中に確認。`portal-app` 側の接続変更はまだ
 - **2026-09-24** — GitHub PATを隠す中間サーバー（`worker-proxy/`、Cloudflare Workers）のコードを実装。
   ドメイン `knowledgenote.work` を取得しCloudflareへネームサーバー移行済み。ポータル本体の
   ホスティング移行とは切り離し、PATを隠すことだけを先に解決する方針にした（Web/モバイル分離のため
-  データ層プロキシが両トラックの前提になる）。デプロイと `portal-app` 側の接続変更はまだ
+  データ層プロキシが両トラックの前提になる）
 - **2026-08-12** — デモモードを追加。`?demo`・台本エンジン `demo-script.js`・パック仕様に `demo.json`（任意）を追加（ADRなし。コードと README が一次情報）
 - **2026-08-08** — 「ファイル削除は JS のキャッシュバストで守れない」ことを記録。`card.json` 移行時に古い index.html が削除済み `persona.md` を探して人格が消える事故が起きた。削除は10分の猶予を見込む運用とし、恒久対策はコンテンツハッシュ（ビルド工程）に持ち越し
 - **2026-08-08** — ホスティングを Cloudflare（Workers + Static Assets）へ移し、ポータルを Access で閉じることを決定。Cloudflare アカウントと独自ドメインの取得待ちで**保留**
@@ -68,7 +75,8 @@ GitHubへの読み書きを中継する薄いプロキシを `worker-proxy/` に
 
 ## 既知の問題・残課題
 
-- **中間サーバーは未デプロイ・未接続。** `worker-proxy/` のコードはあるが、`wrangler login`/`secret put`/`deploy`（本人のCloudflareログインが必要）と、`portal-app` 側のGitHub直叩き箇所をこのプロキシ経由へ差し替える変更がまだ。両方終わるまでPATはブラウザに残ったまま
+- **中間サーバーはデプロイ・疎通確認済みだが未接続。** `worker-proxy/`はCloudflareへデプロイ済み・`api.knowledgenote.work`経由で動作確認済み。残るのは `portal-app` 側のGitHub直叩き箇所（`js/storage/github-storage.js`・`js/core/github.js`）をこのプロキシ経由へ差し替える変更のみ。それが終わるまでPATはブラウザに残ったまま
+- **wranglerのメジャーバージョンが古い（3.114.17、4系が最新）。** 実害は今のところ無いが、次にWorkerを触るときにアップデートを検討する
 - **ポータル本体のCloudflare移行（ホスティング・Access化）は保留のまま。** 上記の中間サーバーとは別の話。着手時の地雷は整理済み: オリジン変更で localStorage（PAT・APIキー・下書き）が全消え／PWA は入れ直し／`workers.dev` を塞がないと Access が素通し／Access + iOS PWA の相性は最初に実機検証
 - **コンテンツハッシュ（ビルド工程）未導入。** ファイル削除を伴う変更は「10分の猶予」という運用でしのいでいる。ビルド工程は Cloudflare 移行時の CI 作り直しとあわせて検討
 - **`deploy-pages.yml` の `path: '.'`。** 現状実害は無いが、絞る場合は `manifest.json` とセットで行うこと
