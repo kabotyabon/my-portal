@@ -16,5 +16,5 @@ GITHUB_BRANCH = "main"
 ALLOWED_ORIGINS = "https://kabotyabon.github.io,https://knowledgenote.work"
 
 # 以下は Secret（このファイルには書かない。`wrangler secret put <NAME>` で個別に登録する）:
-#   GITHUB_PAT     … my-portal-vault への Contents:write / Actions:write を持つ PAT
+#   GITHUB_PAT     … my-portal-vault への Contents:write を持つ PAT
 #   PORTAL_API_KEY … アプリ⇄Worker間の合言葉（例: openssl rand -hex 32 で生成）

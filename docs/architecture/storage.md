@@ -26,7 +26,7 @@ GitHub PATはこのWorkerのSecretとしてのみ存在する。
 
 - 接続先は `js/storage/github-storage.js` の `PROXY_BASE`（`https://api.knowledgenote.work`）に固定。リポジトリ名・ブランチはWorker側の環境変数（`GITHUB_REPO`/`GITHUB_BRANCH`）で固定されており、クライアントは知らない・渡さない（旧 `portal-config.json` / `getRepo()` / `getBranch()` は廃止）
 - クライアント⇄Worker間の認証は「アクセスキー」（`X-Portal-Key`ヘッダー。Workerの`PORTAL_API_KEY`と一致させる）。GitHub PATとは無関係の、Worker専用の合言葉
-- Worker⇄GitHub間はWorkerが保持する`GITHUB_PAT`（Contents:write / Actions:write）で認証する。ブラウザ・モバイルアプリはこのPATを一切持たない
+- Worker⇄GitHub間はWorkerが保持する`GITHUB_PAT`（Contents:writeのみで足りる。日報生成の`workflow_dispatch`用だった`Actions:write`は不要になった）で認証する。ブラウザ・モバイルアプリはこのPATを一切持たない
 - 中間サーバーのコード・デプロイ手順は `worker-proxy/README.md`、仕組みの解説は `my-portal-vault` の `vault/knowledge/Cloudflare_Workersと中間サーバー学習ノート.md`
 
 ### 認証情報の保存方式
@@ -81,7 +81,6 @@ GitHub PATはブラウザに一切保存しない（Cloudflare WorkerのSecret�
 
 - **D1 移行は保留中**。着手条件は「音声入力機能の追加」「日記ファイル500件超で検索が遅くなる」「月次集計など集計クエリが必要になる」のいずれか。いずれも未達。なお当初計画の `storage/interface.ts`（StorageAdapter）は作らず、`js/storage/*-repository.js` のリポジトリ層が差し替え境界を代替している
 - **ポータル本体（GitHub Pages配信）とペルソナ画像の中継は、まだCloudflareへ移していない。** 今回整備したのは「GitHub Contents APIへの中間サーバー」だけで、ポータル自体のホスティング・private化はスコープ外（demo-deploy.mdの残課題を参照）
-- **`daily-report.yml`（GitHub Actions）は使われなくなった。** 呼び出し元だった`js/core/github.js`を削除したため、このワークフロー自体を`my-portal-vault`から削除するか判断が必要（削除するなら`Actions: write`のPATスコープも不要になる）
 - **楽観的ロックは会話ログのみ**。日記・設定・タスク・AI ツール（`tool-dispatcher.js`）経由の書き込みは既定の上書き挙動のままで、2台同時編集では理屈上 lost update が起こりうる
 - **楽観的ロックのブラウザ上での実動作は未確認**（検証はスタブによる `tools/verify-append-conflict.mjs` のみ）
 - **`save_file` の上書きガードは往復をまたげない**。前の往復で読んでいても次の往復では「読んでいない」扱い（安全側）

@@ -13,7 +13,7 @@
  *   GITHUB_REPO      (vars)   例: "kabotyabon/my-portal-vault"
  *   GITHUB_BRANCH    (vars)   例: "main"
  *   ALLOWED_ORIGINS  (vars)   例: "https://kabotyabon.github.io,https://knowledgenote.work"
- *   GITHUB_PAT       (secret) my-portal-vault への Contents:write / Actions:write を持つ PAT
+ *   GITHUB_PAT       (secret) my-portal-vault への Contents:write を持つ PAT
  *   PORTAL_API_KEY   (secret) アプリ⇄Worker間の合言葉（openssl rand -hex 32 等で生成）
  */
 
@@ -39,10 +39,6 @@ export default {
       if (path.startsWith('/api/vault/contents/')) {
         const filePath = decodeURIComponent(path.slice('/api/vault/contents/'.length));
         return await handleContents(request, env, filePath, url.searchParams, corsHeaders);
-      }
-
-      if (path === '/api/vault/dispatch/daily-report' && request.method === 'POST') {
-        return await handleDispatch(request, env, corsHeaders);
       }
 
       return json({ message: 'Not found' }, 404, corsHeaders);
@@ -134,20 +130,4 @@ async function handleContents(request, env, filePath, searchParams, corsHeaders)
   }
 
   return json({ message: 'Method not allowed' }, 405, corsHeaders);
-}
-
-/** POST /api/vault/dispatch/daily-report … 日報ワークフローを workflow_dispatch で起動する */
-async function handleDispatch(request, env, corsHeaders) {
-  const payload = await request.json().catch(() => ({}));
-  const res = await fetch(
-    `https://api.github.com/repos/${env.GITHUB_REPO}/actions/workflows/daily-report.yml/dispatches`,
-    {
-      method: 'POST',
-      headers: { ...githubHeaders(env), 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ref: payload.ref || env.GITHUB_BRANCH || 'main' })
-    }
-  );
-  if (res.status === 204) return new Response(null, { status: 204, headers: corsHeaders });
-  const body = await res.text();
-  return new Response(body, { status: res.status, headers: { 'Content-Type': 'application/json', ...corsHeaders } });
 }

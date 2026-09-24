@@ -22,7 +22,7 @@ GitHub PAT をブラウザ・モバイルアプリから完全に隠すための
 3. Secret を2つ登録する（値はターミナルで直接入力する。ファイルには保存されない）
    ```bash
    npx wrangler secret put GITHUB_PAT
-   # → my-portal-vault リポジトリへの Contents:write / Actions:write を持つ PAT を貼り付け
+   # → my-portal-vault リポジトリへの Contents:write を持つ PAT を貼り付け
 
    npx wrangler secret put PORTAL_API_KEY
    # → アプリ⇄Worker間の合言葉。適当な長いランダム文字列でよい
@@ -48,7 +48,6 @@ GitHub PAT をブラウザ・モバイルアプリから完全に隠すための
 | GET | `/api/vault/contents/<path>?ref=<branch>` | ファイル取得・ディレクトリ一覧（GitHub Contents APIのレスポンスをそのまま透過） |
 | PUT | `/api/vault/contents/<path>` | 作成・更新。body: `{content, message, branch?, sha?}` |
 | DELETE | `/api/vault/contents/<path>` | 削除。body: `{message, sha, branch?}` |
-| POST | `/api/vault/dispatch/daily-report` | 日報テンプレートの生成（`daily-report.yml` を起動）。body: `{ref?}` |
 
 すべてのリクエストに `X-Portal-Key: <PORTAL_API_KEYの値>` ヘッダーが必要。
 `Origin` が `wrangler.toml` の `ALLOWED_ORIGINS` に含まれていないと CORS で弾かれる。
@@ -58,8 +57,10 @@ GitHub PAT をブラウザ・モバイルアプリから完全に隠すための
 - 許可するオリジンを増やす／リポジトリ・ブランチを変える → `wrangler.toml` の `[vars]` を編集して再デプロイ
 - Secret（PAT・合言葉）をローテーションする → 手順3を再実行（同名のSecretは上書きされる）
 
-## まだやっていないこと
+## 現状
 
-- アプリ側（`portal-app/js/storage/github-storage.js` 等）をこのプロキシ経由に差し替える変更は未着手。
-  現状の `portal-app` は引き続きブラウザから直接GitHubを叩く（PATがブラウザに残る）。
-  この差し替えは別途行う。
+- アプリ側（`portal-app/js/storage/github-storage.js`）はこのプロキシ経由に切り替え済み（2026-09-25）。
+  GitHub PATはブラウザに一切存在しない
+- 日報生成用の `POST /api/vault/dispatch/daily-report` エンドポイントは、呼び出し元
+  （`daily-report.yml`・`js/core/github.js`）が既にデッドコードだったため両方とも削除済み。
+  そのため `GITHUB_PAT` に必要なスコープも `Contents:write` のみで足りる（`Actions:write` は不要）
