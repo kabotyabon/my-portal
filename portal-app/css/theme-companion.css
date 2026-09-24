@@ -1000,19 +1000,17 @@ body.theme-companion::before { content: none !important; }
   .theme-companion.kb-open:not([data-tab="talk"]) #main-panel-report,
   .theme-companion.kb-open:not([data-tab="talk"]) #main-panel-archive,
   .theme-companion.kb-open:not([data-tab="talk"]) #main-panel-settings,
-  .theme-companion.kb-open:not([data-tab="talk"]) #main-panel-links,
   .theme-companion.kb-open:not([data-tab="talk"]) #memo-tab-card {
     bottom: calc(12px + var(--inset-b) + var(--kb, 0px));
   }
 
-  /* --- 紙のシート（日記 / 過去 / 設定 / リンク） --- */
+  /* --- 紙のシート（日記 / 過去 / 設定） --- */
   .theme-companion #main-panel-report,
   .theme-companion #main-panel-archive,
-  .theme-companion #main-panel-settings,
-  .theme-companion #main-panel-links {
+  .theme-companion #main-panel-settings {
     position: fixed;
     /* #col-main の中では舞台（z0）より後ろに来ないよう明示する
-       （panel-report / panel-links は DOM 上 panel-ai より前にあるため） */
+       （panel-report は DOM 上 panel-ai より前にあるため） */
     z-index: 5;
     /* 日記タブのセグメント（上端 + 38px 程度）の下に来る高さ */
     top: calc(var(--inset-t) + var(--top-gutter) + 48px);
@@ -1179,54 +1177,6 @@ body.theme-companion::before { content: none !important; }
   background: var(--red-light) !important;
   border-color: #eccfcc !important;
   color: var(--red) !important;
-}
-
-/* ===========================================================================
-   11b. クイックリンク
-   =========================================================================== */
-
-.theme-companion .link-card {
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  background: #fff;
-  box-shadow: var(--shadow-card);
-  color: var(--text);
-  min-height: 84px;
-  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
-}
-
-.theme-companion .link-card:hover {
-  background: #fff;
-  border-color: var(--accent-dim);
-  transform: translateY(-2px);
-  box-shadow: 0 10px 26px rgba(155, 130, 120, .16);
-}
-
-.theme-companion .link-card-label { font-size: 11.5px; color: var(--text-sub); }
-.theme-companion .link-card .del-btn { color: var(--text-fainter); }
-
-.theme-companion .link-cat-label {
-  border-top: 1px solid var(--border);
-  color: var(--text-faint);
-  font-size: 11px;
-  letter-spacing: .14em;
-}
-
-.theme-companion .add-card-btn {
-  border: 1px dashed var(--border-strong);
-  border-radius: 18px;
-  background: transparent;
-  color: var(--text-faint);
-  font-size: 12px;
-  min-height: 84px;
-}
-
-.theme-companion .add-card-btn:hover { border-color: var(--accent-dim); color: var(--accent); }
-
-.theme-companion .add-form {
-  background: var(--section-bg);
-  border-radius: 18px;
-  padding: 14px;
 }
 
 /* ===========================================================================

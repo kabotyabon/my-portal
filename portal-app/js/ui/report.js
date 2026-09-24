@@ -68,7 +68,7 @@ async function fetchDailyReport () {
 }
 
 function switchMainTab (name) {
-  const tabs = ['report', 'issues', 'links', 'ai', 'archive', 'settings'];
+  const tabs = ['report', 'ai', 'archive', 'settings'];
   const enabledTabs = tabs.filter(t => !!document.getElementById('main-panel-' + t));
 
   const fallback = enabledTabs.includes('report')
@@ -88,9 +88,6 @@ function switchMainTab (name) {
     if (isActive) panelEl.style.removeProperty('display');
   });
 
-  if (target === 'issues' && typeof fetchIssueBoard === 'function') {
-    fetchIssueBoard();
-  }
   if (target === 'settings' && typeof initSettingsTab === 'function') {
     initSettingsTab();
   }

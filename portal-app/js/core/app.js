@@ -62,9 +62,8 @@ function applyMobileLayout() {
   setHidden(byId('main-panel-report'),    !(isDiary && diarySegment === 'today'));
   setHidden(byId('main-panel-archive'),   !(isDiary && diarySegment === 'past'));
 
-  // 設定・リンク
+  // 設定
   setHidden(byId('main-panel-settings'),  section !== 'settings');
-  setHidden(byId('main-panel-links'),     true);
 
   if (isDiary && diarySegment === 'past' && typeof initArchivePanel === 'function') initArchivePanel();
   if (section === 'settings' && typeof initSettingsTab === 'function') initSettingsTab();
@@ -268,7 +267,6 @@ loadAllPartials().then(async () => {
     // 評価履歴を会話ログから復元する（端末をまたいで傾向を共有するため）。
     // await しない: 対話開始までブロックさせない。間に合わなければその回は localStorage だけで判定する。
     if (typeof ReplyFeedback !== 'undefined') ReplyFeedback.loadFromVault();
-    if (typeof renderAllLinks === 'function') renderAllLinks();
     const kintaiLink = byId('kintai-sheet-link');
     if (kintaiLink && getKintaiUrl()) kintaiLink.href = getKintaiUrl();
 

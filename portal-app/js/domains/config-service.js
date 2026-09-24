@@ -5,7 +5,6 @@
 
 window.ConfigService = {
   data: {
-    links: [],
     kintaiUrl: ''
   },
 
@@ -73,7 +72,6 @@ window.ConfigService = {
    */
   _getFromLocalStorage() {
     const map = {
-      links: () => JSON.parse(localStorage.getItem('all_links_v2')),
       kintaiUrl: () => localStorage.getItem('kintai_sheet_url'),
     };
 
@@ -101,7 +99,6 @@ window.ConfigService = {
    * localStorage 依存の既存機能との互換性維持
    */
   _syncToLocalStorage() {
-    localStorage.setItem('all_links_v2', JSON.stringify(this.data.links));
     localStorage.setItem('kintai_sheet_url', this.data.kintaiUrl);
   },
 
@@ -115,7 +112,7 @@ window.ConfigService = {
     banner.id = 'portal-auth-error-banner';
     banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#c0392b;color:#fff;padding:10px 16px;font-size:0.85rem;display:flex;align-items:center;gap:12px;';
     banner.innerHTML = `
-      <span style="flex:1;">⚠️ GitHub トークンが無効または期限切れです。設定画面でトークンを更新してください。</span>
+      <span style="flex:1;">⚠️ アクセスキーが無効です。設定画面で更新してください。</span>
       <button onclick="if(window.innerWidth<=MOBILE_BREAKPOINT)switchBottomNav('settings');else switchMainTab('settings');" style="background:#fff;color:#c0392b;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-weight:bold;">設定を開く</button>
       <button onclick="this.parentElement.remove();" style="background:transparent;color:#fff;border:none;cursor:pointer;font-size:1.1rem;">✕</button>
     `;
@@ -128,7 +125,6 @@ window.ConfigService = {
   async migrateFromLocalStorage() {
     console.log('ConfigService: Migrating from localStorage...');
     this.data = {
-      links: JSON.parse(localStorage.getItem('all_links_v2') || '[]'),
       kintaiUrl: localStorage.getItem('kintai_sheet_url') || ''
     };
     try {

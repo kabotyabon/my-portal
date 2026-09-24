@@ -77,5 +77,6 @@
 | 2026-09-24 | ドメイン knowledgenote.work を取得しCloudflareへネームサーバー移行。GitHub PATを隠す中間サーバー（worker-proxy/、Cloudflare Workers）のコードを実装。ポータル本体のホスティング移行とはスコープを分離した | demo-deploy |
 | 2026-09-25 | 中間サーバー（worker-proxy/）をCloudflareへデプロイし、api.knowledgenote.workへのカスタムドメイン紐付け・疎通確認まで完了。portal-app側の接続変更のみ残る | demo-deploy |
 | 2026-09-25 | portal-app側をGitHub直叩きから中間サーバー経由に切り替え完了。GitHub PATをブラウザから完全排除し設定項目を「アクセスキー」に変更。副産物として、日報生成の`workflow_dispatch`呼び出し（js/core/github.js）が report.js の実装に上書きされ実質デッドコードだったことが判明し削除した | storage |
+| 2026-09-25 | 使われなくなったクイックリンク機能（PC専用タブ。スマホの4タブには元々含まれず）を削除。JS(quicklinks.js)・パーシャル(panel-links.html)・CSS・ConfigServiceの`links`フィールドを一式除去。同時に死んでいた課題ボード用スタブ(`issues`タブ・`fetchIssueBoard`)も除去した | — |
 
 以後、決定のたびにこの表へ1行追記する（新しい行を末尾に）。
