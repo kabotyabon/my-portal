@@ -1,6 +1,6 @@
 /**
- * ADR-043 の lost update を、本物の saveFile() / _appendToFile() で再現・検証する。
- * 通信部分だけ GitHub の挙動を模したスタブに差し替える（ADR-043/046 と同じやり方）。
+ * 会話ログの発話が消えた lost update を、本物の saveFile() / _appendToFile() で再現・検証する。
+ * 通信部分だけ GitHub の挙動を模したスタブに差し替える。
  */
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';

@@ -1,5 +1,5 @@
 /**
- * 表情差分シートを1枚ずつに割るツール（ADR-042）
+ * 表情差分シートを1枚ずつに割るツール
  *
  *   npm i sharp --no-save
  *   node tools/split-expression-sheet.js <シート.png> <出力ディレクトリ> <名前1,名前2,...>

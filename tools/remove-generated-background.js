@@ -1,5 +1,5 @@
 /**
- * アバター表情差分の下処理ツール（ADR-035）
+ * アバター表情差分の下処理ツール
  *
  *   npm i sharp --no-save        # package.json は汚さない
  *   node tools/remove-generated-background.js <入力ディレクトリ> <出力ディレクトリ>
@@ -9,7 +9,7 @@
  * 抜け残りやフチの白浮きを目視で確認してから vault/persona/<セット>/expressions/ へコピーする。
  *
  * 1枚に複数の表情が並んだシートが返ってきた場合は、先に
- * tools/split-expression-sheet.js で1枚ずつに割ってから使う（ADR-042）。
+ * tools/split-expression-sheet.js で1枚ずつに割ってから使う。
  *
  * 背景を透過にする処理そのものは tools/lib/transparent-bg.js にある。
  */
