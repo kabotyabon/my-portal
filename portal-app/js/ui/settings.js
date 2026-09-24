@@ -2,7 +2,7 @@
 // 設定画面・永続化ロジック
 // =====================
 
-const TOKEN_KEY  = 'gh_pat';
+const TOKEN_KEY  = 'portal_api_key'; // 中間サーバー（Worker）のPORTAL_API_KEYと同じ値。GitHub PATはブラウザに持たない
 const GEMINI_KEY = 'gemini_api_key';
 
 window.TOKEN_KEY  = TOKEN_KEY;
@@ -44,7 +44,6 @@ function _readKey(name) {
 
 function getToken()     { return _readKey(TOKEN_KEY); }
 function getGeminiKey() { return _readKey(GEMINI_KEY); }
-// getRepo / getBranch は js/core/config.js で定義（data/portal-config.json から読む）
 
 window.getToken     = getToken;
 window.getGeminiKey = getGeminiKey;
@@ -137,7 +136,7 @@ function _validateApiKey(val, label) {
   return null;
 }
 
-// ---- GitHub PAT ----
+// ---- アクセスキー（中間サーバーのPORTAL_API_KEY） ----
 function showModalTokenUI() {
   const hasToken = !!getToken();
   document.getElementById('modal-pat-set').classList.toggle('is-hidden', !hasToken);
@@ -147,7 +146,7 @@ function showModalTokenUI() {
 async function saveToken() {
   const val = document.getElementById('token-input').value.trim();
   if (!val) return;
-  const invalid = _validateApiKey(val, 'GitHub PAT');
+  const invalid = _validateApiKey(val, 'アクセスキー');
   if (invalid) { alert(invalid); return; }
   try {
     await _writeKey(TOKEN_KEY, val);

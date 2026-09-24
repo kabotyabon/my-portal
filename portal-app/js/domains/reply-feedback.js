@@ -130,7 +130,7 @@ window.ReplyFeedback = {
   },
 
   async _loadFromVault(days) {
-    if (typeof getToken !== 'function' || !getToken() || !getRepo()) { this._vaultEvents = []; return []; }
+    if (typeof getToken !== 'function' || !getToken()) { this._vaultEvents = []; return []; }
     if (typeof ConversationLog === 'undefined') { this._vaultEvents = []; return []; }
 
     const today = getJstTodayISO();

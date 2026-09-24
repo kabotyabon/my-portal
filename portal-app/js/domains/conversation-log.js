@@ -79,7 +79,7 @@ window.ConversationLog = {
     if (this._flushing) return;
     const queued = this._queue();
     if (queued.length === 0) return;
-    if (typeof getToken !== 'function' || !getToken() || !getRepo()) return;
+    if (typeof getToken !== 'function' || !getToken()) return;
 
     this._flushing = true;
     try {

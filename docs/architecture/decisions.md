@@ -76,5 +76,6 @@
 | 2026-09-23 | 相談モードと日記の「事実だけ書く」規律をハンドブックへ文書化（実装済みだが未記載だった）。両者の関係と残課題を明記 | conversation |
 | 2026-09-24 | ドメイン knowledgenote.work を取得しCloudflareへネームサーバー移行。GitHub PATを隠す中間サーバー（worker-proxy/、Cloudflare Workers）のコードを実装。ポータル本体のホスティング移行とはスコープを分離した | demo-deploy |
 | 2026-09-25 | 中間サーバー（worker-proxy/）をCloudflareへデプロイし、api.knowledgenote.workへのカスタムドメイン紐付け・疎通確認まで完了。portal-app側の接続変更のみ残る | demo-deploy |
+| 2026-09-25 | portal-app側をGitHub直叩きから中間サーバー経由に切り替え完了。GitHub PATをブラウザから完全排除し設定項目を「アクセスキー」に変更。副産物として、日報生成の`workflow_dispatch`呼び出し（js/core/github.js）が report.js の実装に上書きされ実質デッドコードだったことが判明し削除した | storage |
 
 以後、決定のたびにこの表へ1行追記する（新しい行を末尾に）。

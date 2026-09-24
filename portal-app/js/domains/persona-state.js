@@ -56,7 +56,7 @@ window.PersonaState = {
   },
 
   async _load() {
-    if (typeof getToken !== 'function' || !getToken() || !getRepo()) { this._profile = ''; return ''; }
+    if (typeof getToken !== 'function' || !getToken()) { this._profile = ''; return ''; }
     const res = await GitHubStorage.getFile(this.PROFILE_PATH).catch(() => null);
     this._profile = res ? res.content : '';
     return this._profile;

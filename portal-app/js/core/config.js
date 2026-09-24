@@ -1,14 +1,4 @@
 // =====================
-// 定数・リポジトリ設定
-// =====================
-
-function getRepo()   { return (window.PORTAL_CONFIG_INLINE && window.PORTAL_CONFIG_INLINE.repo) || ''; }
-function getBranch() { return (window.PORTAL_CONFIG_INLINE && window.PORTAL_CONFIG_INLINE.branch) || 'main'; }
-
-window.getRepo = getRepo;
-window.getBranch = getBranch;
-
-// =====================
 // ペルソナ
 // =====================
 // 使用中のアバター一式（card.json / scene.json / avatar.png / expressions/）の置き場。
@@ -88,3 +78,8 @@ Object.keys(localStorage)
   .filter(k => k.startsWith('checklist_') || k.startsWith('daily-task-')
             || k === 'daily-checklist-date' || k === 'avatar_background')
   .forEach(k => localStorage.removeItem(k));
+
+// --- 中間サーバー移行（2026-09-25）が残した生PATの掃除 ---
+// gh_pat・github_pat_token は以前ブラウザから直接GitHubを叩くために使っていた生PAT。
+// 今はアクセスキー（portal_api_key）経由で中間サーバーを叩くだけになり不要かつ危険なので破棄する。
+['gh_pat', 'github_pat_token'].forEach(k => localStorage.removeItem(k));

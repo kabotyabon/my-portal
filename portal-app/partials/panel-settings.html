@@ -4,19 +4,19 @@
   <h3 class="sheet-heading">設定</h3>
   <hr class="sheet-rule">
 
-  <!-- GitHub PAT -->
+  <!-- アクセスキー（中間サーバー経由。GitHub PATは直接扱わない） -->
   <div class="modal-section" style="margin-bottom:20px;">
-    <div class="modal-label">GitHub Personal Access Token</div>
+    <div class="modal-label">アクセスキー</div>
     <div id="modal-pat-set" class="is-hidden">
-      <div style="font-size:12.5px;color:var(--green);margin-bottom:8px;font-weight:700;">PAT が設定済みです</div>
-      <button class="btn-quiet danger" onclick="clearToken()">トークンを削除</button>
+      <div style="font-size:12.5px;color:var(--green);margin-bottom:8px;font-weight:700;">アクセスキーが設定済みです</div>
+      <button class="btn-quiet danger" onclick="clearToken()">アクセスキーを削除</button>
     </div>
     <div id="modal-pat-unset">
       <div class="token-row">
-        <input id="token-input" class="token-input" type="password" placeholder="ghp_xxxxxxxxxxxx">
+        <input id="token-input" class="token-input" type="password" placeholder="アクセスキーを貼り付け">
         <button class="btn-primary" onclick="saveToken()">保存</button>
       </div>
-      <p class="modal-note">repo スコープ + Actions write が必要です。<strong>fine-grained PAT（対象リポジトリを限定したトークン）を推奨</strong>します</p>
+      <p class="modal-note">中間サーバー（Cloudflare Worker）に設定した <code>PORTAL_API_KEY</code> と同じ値を入力してください。GitHub PATはここには入力しません（PATはWorker側にのみ保管されます）</p>
     </div>
     <div id="modal-status" class="modal-status"></div>
   </div>
@@ -82,5 +82,5 @@
 
 </div>
 
-<script src="js/ui/settings.js?v=20260819"></script>
+<script src="js/ui/settings.js?v=20260925"></script>
 <script src="js/ui/perxona-settings.js?v=20260921"></script>

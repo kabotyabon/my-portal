@@ -91,9 +91,3 @@ const PerxonaConfig = {
 };
 
 window.PerxonaConfig = PerxonaConfig;
-
-// 旧 Perxona 版アプリが別名で保存していた PAT を引き継ぐ（gh_pat が未設定のときだけ）
-try {
-  const legacyPat = localStorage.getItem('github_pat_token');
-  if (legacyPat && !localStorage.getItem('gh_pat')) localStorage.setItem('gh_pat', legacyPat);
-} catch (e) { /* 引き継げなくても動作に影響しない */ }

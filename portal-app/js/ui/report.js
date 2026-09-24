@@ -38,11 +38,7 @@ async function fetchDailyReport () {
 
   const token = getToken();
   if (!token) {
-    document.getElementById('report-preview').innerHTML = '<p class="md-empty">設定から PAT を設定すると日記を表示します</p>';
-    return;
-  }
-  if (!getRepo()) {
-    document.getElementById('report-preview').innerHTML = '<p class="md-empty">設定から GitHub リポジトリを設定してください</p>';
+    document.getElementById('report-preview').innerHTML = '<p class="md-empty">設定からアクセスキーを設定すると日記を表示します</p>';
     return;
   }
 
@@ -403,8 +399,7 @@ async function saveDailyReport () {
 
 async function pushReportToGitHub (message) {
   const token = getToken();
-  const repo = getRepo();
-  if (!token || !repo) return;
+  if (!token) return;
 
   const saveEl = document.getElementById('save-status');
   const metaEl = document.getElementById('report-meta');
@@ -428,9 +423,7 @@ async function pushReportToGitHub (message) {
 
 async function regenReport () {
   const token = getToken();
-  const repo = getRepo();
-  if (!token) { alert('設定画面から GitHub PAT を入力してください'); return; }
-  if (!repo)  { alert('portal-config.json に repo が設定されていません'); return; }
+  if (!token) { alert('設定画面からアクセスキーを入力してください'); return; }
 
   const btn = document.getElementById('regen-btn');
   const statusEl = document.getElementById('regen-status');

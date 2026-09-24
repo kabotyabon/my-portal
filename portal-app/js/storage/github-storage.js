@@ -1,7 +1,16 @@
 /**
- * Persistence Layer: GitHub API Storage
- * 依存関係: js/config.js (getRepo, getBranch), js/settings.js (getToken), js/utils.js (encodeUtf8Base64)
+ * Persistence Layer: GitHub Storage (中間サーバー経由)
+ * 依存関係: js/ui/settings.js (getToken), js/core/utils.js (encodeUtf8Base64)
+ *
+ * my-portal-vault への読み書きは、Cloudflare Workers の中間サーバー
+ * （worker-proxy/、api.knowledgenote.work）を経由する。GitHub PATはWorker側の
+ * Secretにのみ存在し、ブラウザは一切持たない。ここで持つのは PORTAL_API_KEY と
+ * 同じ値の「アクセスキー」（settings.js の getToken()）だけ。
+ * リポジトリ・ブランチはWorker側の環境変数で固定されているため、クライアント側の
+ * 設定（旧 portal-config.json / getRepo・getBranch）は不要になった。
  */
+
+const PROXY_BASE = 'https://api.knowledgenote.work';
 
 class GitHubAuthError extends Error {
   constructor(message) {
@@ -29,25 +38,27 @@ window.GitHubStorage = {
   /**
    * 認証情報を取り出す。全メソッドの入口で使う。
    *
-   * PAT は Authorization ヘッダに載せるため、ISO-8859-1 の範囲外の文字が
+   * アクセスキーは X-Portal-Key ヘッダに載せるため、ISO-8859-1 の範囲外の文字が
    * 1つでもあると fetch が `String contains non ISO-8859-1 code point` という
-   * TypeError を投げる。呼び出し箇所から遠いところで出るうえ、
-   * リポジトリ設定の問題と見分けがつかないので、ここで原因の分かる形にする。
-   * （実際にトークン欄へ別のテキストを貼ってしまい、全 API が落ちる事故が起きた）
+   * TypeError を投げる。呼び出し箇所から遠いところで出るので、ここで原因の分かる形にする。
    *
-   * @returns {{token: string, repo: string}}
+   * @returns {{key: string}}
    */
   _requireAuth() {
-    const token = getToken();
-    const repo = getRepo();
-    if (!token || !repo) throw new Error('GitHub PAT またはリポジトリが設定されていません');
-    if (/[^\x21-\x7E]/.test(token)) {
+    const key = getToken();
+    if (!key) throw new Error('アクセスキーが設定されていません');
+    if (/[^\x21-\x7E]/.test(key)) {
       throw new GitHubAuthError(
-        'GitHub PAT に使用できない文字が含まれています（全角文字や空白など）。'
-        + '設定から「トークンを削除」して、入力し直してください。'
+        'アクセスキーに使用できない文字が含まれています（全角文字や空白など）。'
+        + '設定から「アクセスキーを削除」して、入力し直してください。'
       );
     }
-    return { token, repo };
+    return { key };
+  },
+
+  _contentsUrl(path) {
+    const encPath = path.split('/').map(encodeURIComponent).join('/');
+    return `${PROXY_BASE}/api/vault/contents/${encPath}`;
   },
 
   /**
@@ -56,16 +67,15 @@ window.GitHubStorage = {
    * @returns {Promise<{content: string, sha: string, path: string} | null>}
    */
   async getFile(path) {
-    const { token, repo } = this._requireAuth();
+    const { key } = this._requireAuth();
 
-    const encPath = path.split('/').map(encodeURIComponent).join('/');
-    // GitHub API は Cache-Control: max-age=60 を返すため、既定の fetch だと
-    // 書き込み直後の再取得が最大60秒古い内容を返す（「更新を押しても反映されない」の原因）。
-    const res = await fetch(`https://api.github.com/repos/${repo}/contents/${encPath}?ref=${getBranch()}`, {
+    // 中間サーバー側で Cache-Control: no-store を付与しているため、
+    // 書き込み直後の再取得でも古い内容を掴まない。
+    const res = await fetch(this._contentsUrl(path), {
       cache: 'no-store',
       headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github+json'
+        'X-Portal-Key': key,
+        Accept: 'application/json'
       }
     });
 
@@ -81,7 +91,7 @@ window.GitHubStorage = {
     const data = await res.json();
     const raw = atob(data.content.replace(/\n/g, ''));
     const content = new TextDecoder('utf-8').decode(Uint8Array.from(raw, c => c.charCodeAt(0)));
-    
+
     return {
       content,
       sha: data.sha,
@@ -105,10 +115,9 @@ window.GitHubStorage = {
    * @throws {GitHubConflictError} `baseSha` 指定時に照合が失敗した場合
    */
   async saveFile(path, content, message = 'Update file via Portal', opts = {}) {
-    const { token, repo } = this._requireAuth();
+    const { key } = this._requireAuth();
 
-    const encPath = path.split('/').map(encodeURIComponent).join('/');
-    const url = `https://api.github.com/repos/${repo}/contents/${encPath}`;
+    const url = this._contentsUrl(path);
     const encodedContent = encodeUtf8Base64(content);
     const useBaseSha = Object.prototype.hasOwnProperty.call(opts, 'baseSha');
 
@@ -129,14 +138,12 @@ window.GitHubStorage = {
       const res = await fetch(url, {
         method: 'PUT',
         headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/vnd.github+json',
+          'X-Portal-Key': key,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           message,
           content: encodedContent,
-          branch: getBranch(),
           ...(sha ? { sha } : {})
         })
       });
@@ -192,20 +199,18 @@ window.GitHubStorage = {
    * @returns {Promise<boolean>} 削除したら true、存在しなければ false
    */
   async deleteFile(path, message = 'Delete file via Portal') {
-    const { token, repo } = this._requireAuth();
+    const { key } = this._requireAuth();
 
     const existing = await this.getFile(path);
     if (!existing) return false;
 
-    const encPath = path.split('/').map(encodeURIComponent).join('/');
-    const res = await fetch(`https://api.github.com/repos/${repo}/contents/${encPath}`, {
+    const res = await fetch(this._contentsUrl(path), {
       method: 'DELETE',
       headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github+json',
+        'X-Portal-Key': key,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ message, sha: existing.sha, branch: getBranch() })
+      body: JSON.stringify({ message, sha: existing.sha })
     });
 
     if (!res.ok) {
@@ -222,14 +227,13 @@ window.GitHubStorage = {
    * @returns {Promise<Array>}
    */
   async listFiles(directory) {
-    const { token, repo } = this._requireAuth();
+    const { key } = this._requireAuth();
 
-    const encPath = directory.split('/').map(encodeURIComponent).join('/');
-    const res = await fetch(`https://api.github.com/repos/${repo}/contents/${encPath}?ref=${getBranch()}`, {
-      cache: 'no-store',   // getFile と同じ理由（max-age=60 の古い一覧を掴まない）
+    const res = await fetch(this._contentsUrl(directory), {
+      cache: 'no-store',   // getFile と同じ理由（古い一覧を掴まない）
       headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github+json'
+        'X-Portal-Key': key,
+        Accept: 'application/json'
       }
     });
 

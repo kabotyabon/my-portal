@@ -215,14 +215,6 @@ loadAllPartials().then(async () => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); sendChat(); }
   });
 
-  // data/portal-config.json を読み込む
-  try {
-    const res = await fetch('data/portal-config.json');
-    if (res.ok) window.PORTAL_CONFIG_INLINE = await res.json();
-  } catch (e) {
-    console.warn('portal-config.json の読み込みに失敗しました:', e);
-  }
-
   // 使用中のペルソナ（PERSONA_DIR）の card.json をロードする。
   //
   // 以前は persona.md の frontmatter を自前でパースしていたが、その実装には穴があった:
