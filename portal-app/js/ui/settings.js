@@ -189,9 +189,14 @@ async function saveGeminiKey() {
   }
   document.getElementById('gemini-key-input').value = '';
   showModalGeminiUI();
+  if (typeof initCharacterSettings === 'function') initCharacterSettings();   // Gemini の声を選択肢に出す
 }
 
-function clearGeminiKey() { _removeKey(GEMINI_KEY); showModalGeminiUI(); }
+function clearGeminiKey() {
+  _removeKey(GEMINI_KEY);
+  showModalGeminiUI();
+  if (typeof initCharacterSettings === 'function') initCharacterSettings();
+}
 
 // ---- APIキーの書き込み ----
 // 呼び出し側は await している。Promise を返さなくても await は通るのでそのままでよい。

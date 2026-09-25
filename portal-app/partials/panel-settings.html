@@ -70,16 +70,16 @@
       <label for="avatar-select">見た目</label>
       <select id="avatar-select"></select>
     </div>
-    <div class="perxona-field" id="voice-field">
-      <label for="perxona-voice-select">音声（3D のとき）</label>
-      <select id="perxona-voice-select"><option value="">なし（無音）</option></select>
+    <div class="perxona-field">
+      <label for="voice-select">音声</label>
+      <select id="voice-select"><option value="">なし（無音）</option></select>
     </div>
     <div class="key-actions">
       <button class="btn-primary" onclick="switchCharacter()">切り替える</button>
-      <button class="btn-quiet" id="voice-test-btn" onclick="testPerxonaVoice()">音声テスト</button>
+      <button class="btn-quiet" onclick="testVoice()">音声テスト</button>
       <span id="perxona-status" class="key-test-status"></span>
     </div>
-    <p class="modal-note">切り替えるとページが再読み込みされます。音声テストは 3D 表示中に使えます</p>
+    <p class="modal-note">切り替えるとページが再読み込みされます。Gemini の声は Gemini API キー、Perxona の声は 3D の見た目を選んだときに選べます（Gemini の声は1回の返答で約0.2円）</p>
   </div>
 
   <!-- 「アバターの表情と舞台」セクション（背景セレクタ・表情プレビュー）は 2026-08-19 に削除。
@@ -94,5 +94,5 @@
 
 </div>
 
-<script src="js/ui/settings.js?v=20260925f"></script>
-<script src="js/ui/perxona-settings.js?v=20260925b"></script>
+<script src="js/ui/settings.js?v=20260925g"></script>
+<script src="js/ui/perxona-settings.js?v=20260925c"></script>

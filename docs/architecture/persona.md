@@ -10,7 +10,7 @@
 |---|---|---|---|
 | **人格** | `card.json`（口調・規律・プロンプト）＋ 記憶（`persona-state/`） | vault（非公開） | 中間サーバー経由（アクセスキー必須） |
 | **表示** | 2D: 立ち絵・表情差分・`scene.json` ／ 3D: Perxona アバター | アプリ（公開） | 相対 fetch ／ Perxona Connect API |
-| **音声** | Perxona Voice（将来 Gemini TTS） | アプリ（公開）＋キー | 各キーは個人の秘匿値として localStorage |
+| **音声** | なし / Gemini TTS / Perxona Voice | アプリ（公開）＋キー | 各キーは個人の秘匿値として localStorage |
 
 - **人格は vault につき1つ。** 選ぶものではなく、その vault の持ち主の相棒（将来の多人数利用では各自の vault に1つずつ入る）。
   見た目と声は誰でも使える共通カタログから選ぶ
@@ -72,8 +72,22 @@ my-portal/portal-app/assets/avatars/ ← 表示（公開）
   下に操作行（接続テスト・削除・結果表示）。共通クラスは `.key-set-msg` / `.key-actions` / `.key-test-status`（base.css）
 - **キャラクター欄**: 見た目を1つの一覧で選ぶ。2D は `assets/avatars/index.json` から「こはる（2D）」、
   Perxona キーがあるときだけ Connect API カタログから「〇〇（3D）」が加わる。値は `2d:<slug>` / `3d:<avatar_id>`
-- 音声の選択と音声テストは 3D を選んでいるときだけ出る（Perxona の声は 3D 表示とセットでしか鳴らないため）
+- 音声欄は常に出る。選択肢は「なし」＋ Gemini の声（Gemini キーがあるとき）＋ Perxona の声（3D を選んでいるときだけ。2D では鳴らせない）。
+  値は `""` / `gemini:<voice>` / `perxona:<voice_id>`。音声テストは未保存の選択でも鳴らせる（Perxona は保存・3D 表示後）
 - 「切り替える」で保存して `location.reload()`。2D を選ぶと 3D はオフ、3D を選ぶとオン（2D の見た目は失敗時のフォールバックとして残る）
+
+### 音声層（Gemini TTS / Perxona）
+
+表示とは独立に選ぶ。選択は localStorage の `voice_engine`（`''` / `gemini` / `perxona`）と `gemini_tts_voice`。
+
+- `js/presenter/gemini-tts.js`: `POST /v1beta/interactions`（`response_format: audio`）で合成し `<audio>` で再生。
+  モデルは `gemini-3.8-flash-lite-tts`（音声出力 $6/1M token・25 token/秒 → 10 秒の返答で約 $0.0015。2027-01 から倍額の予定）。
+  声は Studio voices 30 種（既定 Leda）。返りは既定 WAV、ヘッダ無し PCM が来たら WAV に包む
+- `avatar-scene.js` の `speak()` が振り分ける: `gemini` なら 2D / 3D を問わず GeminiTTS（3D はリップシンクなし）、
+  `perxona` なら 3D 準備済みのときだけ Perxona。Gemini を選んだ 3D は Perxona 側を無音で初期化する（二重に鳴らさない）
+- 自動再生制限対策: 送信ボタンの操作中に `unlockAudio()` → 無音 WAV を1回鳴らし、前の発話を止める
+- 口調の指示は card.json の任意フィールド `voiceStyle`（例: "やわらかく、ゆっくり"）を `speech_metadata.style` として渡す
+- 喋るのは新しい返答だけ（起動時の挨拶・履歴の再表示では喋らない）
 
 ### persona-state — 記憶の実体
 
@@ -108,6 +122,8 @@ my-portal/portal-app/assets/avatars/ ← 表示（公開）
 
 ## 変遷
 
+- **2026-09-25** 音声層に Gemini TTS を追加（`gemini-tts.js`）。2D のままでも声が出せるようになり、音声を表示から独立させた。
+  Perxona の声は 3D 選択時の選択肢として残す。料金を抑えるため lite モデルを既定にした
 - **2026-09-25** 設定画面を整理。キー欄（Gemini・Perxona）の接続テスト行を揃え、「2D/3D スイッチ＋別々の見た目指定」を
   「こはる（2D）」「〇〇（3D）」が並ぶ1つの一覧に統合（3D は Perxona キーがあるときだけ出る）。Scene ID 入力欄は削除
 - **2026-09-25** 人格と表示を分離。`card.json` を公開側から `vault/persona/card.json` へ移し中間サーバー経由で読む。

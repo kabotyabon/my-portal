@@ -85,5 +85,6 @@
 | 2026-09-25 | TWAを app.knowledgenote.work 向けに再生成（work.knowledgenote.app.twa）。assetlinks.json を portal-app/.well-known/ から配信し、署名鍵はリポジトリ外で保管 | demo-deploy |
 | 2026-09-25 | 人格（card.json）を vault/persona/card.json へ移し（vault につき1つ・設定での人格選択は廃止）、見た目（画像・scene.json）は公開の assets/avatars に分離。見た目は defaultAvatar＋設定で選ぶ。デモモード（?demo）は機能過大として削除。Perxona・Gemini のキーは引き続き秘匿扱い | persona / demo-deploy |
 | 2026-09-25 | 設定画面を整理。キー欄の形と接続テストを統一し、見た目は「こはる（2D）」「〇〇（3D）」を1つの一覧で選ぶ方式に（3D は Perxona キーがあるときだけ）。Scene ID 入力は廃止 | persona |
+| 2026-09-25 | 音声層に Gemini TTS（gemini-3.8-flash-lite-tts、interactions API）を追加。音声を表示から独立させ、2D でも声を出せるように。Perxona の声は 3D 選択時のみの選択肢 | persona |
 
 以後、決定のたびにこの表へ1行追記する（新しい行を末尾に）。

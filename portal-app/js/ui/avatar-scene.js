@@ -265,11 +265,20 @@ window.AvatarScene = {
     document.dispatchEvent(new CustomEvent('perxona-failed', { detail: { reason } }));
   },
 
-  /** 3D が有効なとき、返答を音声つきで喋らせる（表情・候補タグ除去済みの本文を渡すこと） */
+  /**
+   * 返答を喋らせる（表情・候補タグ除去済みの本文を渡すこと）。音声層は表示と独立:
+   *   - 'gemini'  … Gemini TTS。2D / 3D どちらでも鳴る（3D はリップシンクなし）
+   *   - 'perxona' … 3D の準備ができているときだけ、Perxona が声＋リップシンクで喋る
+   */
   speak(text) {
-    if (this._perxona !== 'ready' || typeof PerxonaStage === 'undefined') return;
     const t = String(text || '').trim();
     if (!t) return;
+    const engine = typeof VoiceConfig !== 'undefined' ? VoiceConfig.getEngine() : 'perxona';
+    if (engine === 'gemini' && typeof GeminiTTS !== 'undefined') {
+      GeminiTTS.speak(t);
+      return;
+    }
+    if (this._perxona !== 'ready' || typeof PerxonaStage === 'undefined') return;
     PerxonaStage.interrupt();
     PerxonaStage.present(t);
   },
@@ -277,6 +286,7 @@ window.AvatarScene = {
   /** ユーザー操作の直後に呼ぶ。応答待ちの後では自動再生制限を解除できない。 */
   unlockAudio() {
     if (typeof PerxonaStage !== 'undefined') PerxonaStage.unlockAudio();
+    if (typeof GeminiTTS !== 'undefined') { GeminiTTS.interrupt(); GeminiTTS.unlock(); }
   },
 
   /**

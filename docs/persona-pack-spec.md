@@ -57,6 +57,7 @@ portal-app/assets/avatars/<slug>/ ← 見た目（公開）
     "night": "おつかれさま！…"
   },
   "defaultAvatar": "koharu",  // 既定の見た目（assets/avatars/<slug>）。省略時は id と同じ slug。設定画面で上書きできる
+  "voiceStyle": "",           // 任意。Gemini TTS の話し方の指示（例: "やわらかく、ゆっくり"）
   "avoidWords": ["どす"],      // この人格が使ってはいけない語（任意）
 
   "intro": "あなたは…",        // システムプロンプト冒頭（必須）

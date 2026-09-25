@@ -2,7 +2,9 @@
 // 設定画面: Perxona キーと「キャラクター」欄
 // =====================
 // キャラクターの見た目は 2D 立ち絵（assets/avatars）と 3D（Perxona カタログ）を1つの一覧で選ぶ。
-// 3D の選択肢と音声は Perxona キーがあるときだけ出す。
+// 3D の選択肢は Perxona キーがあるときだけ出す。
+// 音声は表示と独立の層: なし / Gemini TTS（Gemini キーがあれば）/ Perxona（3D を選んでいるときだけ）。
+// 音声 select の value は "" / "gemini:<voice>" / "perxona:<voice_id>"。
 // select の value は "2d:<slug>" / "3d:<avatar_id>" で、2D/3D の別を値に持たせる。
 // Scene ID は静的（PerxonaConfig.DEFAULTS.sceneId。背景は舞台側の scene.json が担う）。
 
@@ -70,24 +72,33 @@ function _currentCharacterValue() {
   return PerxonaConfig.isEnabled() ? `3d:${PerxonaConfig.getAvatarId()}` : `2d:${_current2dSlug()}`;
 }
 
-/** 音声欄と音声テストは 3D を選んでいるときだけ出す */
-function _syncVoiceVisibility() {
-  const is3d = (document.getElementById('avatar-select')?.value || '').startsWith('3d:');
-  document.getElementById('voice-field')?.classList.toggle('is-hidden', !is3d);
-  document.getElementById('voice-test-btn')?.classList.toggle('is-hidden', !is3d);
+let _perxonaVoices = [];   // Connect API の音声カタログ（Perxona キーがあるときに取得）
+
+function _currentVoiceValue() {
+  const engine = VoiceConfig.getEngine();
+  if (engine === 'gemini') return `gemini:${VoiceConfig.getGeminiVoice()}`;
+  if (engine === 'perxona' && PerxonaConfig.getVoiceId()) return `perxona:${PerxonaConfig.getVoiceId()}`;
+  return '';
 }
 
-async function _loadPerxonaVoices() {
-  const select = document.getElementById('perxona-voice-select');
+/** 音声の選択肢を作り直す。Perxona の声は 3D を選んでいるときだけ（2D では鳴らせないため） */
+function _renderVoiceOptions() {
+  const select = document.getElementById('voice-select');
   if (!select) return;
-  const current = PerxonaConfig.getVoiceId();
-  const items = await PerxonaConfig.fetchAll('/voices?language=ja');
-  select.innerHTML = '<option value="">なし（無音）</option>' + items.map(v =>
-    `<option value="${_escAttr(v.id)}">${_escAttr(v.name)}（${_escAttr(v.provider)}）</option>`).join('');
-  if (current && !items.some(v => v.id === current)) {
-    select.insertAdjacentHTML('beforeend', `<option value="${_escAttr(current)}">${_escAttr(current)}（保存済み）</option>`);
+  const keep = select.options.length > 1 ? select.value : _currentVoiceValue();
+  const is3d = (document.getElementById('avatar-select')?.value || '').startsWith('3d:');
+  let html = '<option value="">なし（無音）</option>';
+  if (getGeminiKey()) {
+    html += '<optgroup label="Gemini">' + GEMINI_TTS_VOICES.map(([name, desc]) =>
+      `<option value="gemini:${_escAttr(name)}">${_escAttr(name)}（${_escAttr(desc)}）</option>`).join('') + '</optgroup>';
   }
-  select.value = current;
+  if (is3d && _perxonaVoices.length) {
+    html += '<optgroup label="Perxona（3D）">' + _perxonaVoices.map(v =>
+      `<option value="perxona:${_escAttr(v.id)}">${_escAttr(v.name)}（${_escAttr(v.provider)}）</option>`).join('') + '</optgroup>';
+  }
+  select.innerHTML = html;
+  select.value = keep;
+  if (select.value !== keep) select.value = '';   // 選べなくなった声（3D→2D で Perxona の声など）は「なし」へ
 }
 
 async function initCharacterSettings() {
@@ -112,7 +123,7 @@ async function initCharacterSettings() {
       if (current && !list3d.some(a => a.avatar_id === current)) {
         html += `<option value="3d:${_escAttr(current)}">${_escAttr(current)}（3D・保存済み）</option>`;
       }
-      await _loadPerxonaVoices();
+      _perxonaVoices = await PerxonaConfig.fetchAll('/voices?language=ja');
     } catch (e) {
       _perxonaStatus(`3D の一覧を取得できません（${e.message}）。Perxona キーの接続テストで確認してください`, false);
     }
@@ -121,17 +132,27 @@ async function initCharacterSettings() {
   select.innerHTML = html;
   select.value = _currentCharacterValue();
   if (!select.value && select.options.length) select.selectedIndex = 0;
-  select.onchange = _syncVoiceVisibility;
-  _syncVoiceVisibility();
+  select.onchange = _renderVoiceOptions;
+  document.getElementById('voice-select').innerHTML = '';   // 保存済みの値から選び直させる
+  _renderVoiceOptions();
 }
 
 function switchCharacter() {
   const value = document.getElementById('avatar-select')?.value || '';
   const [kind, id] = [value.slice(0, 2), value.slice(3)];
   if (!id) return;
+  const voice = document.getElementById('voice-select')?.value || '';
+  if (voice.startsWith('gemini:')) {
+    VoiceConfig.setEngine('gemini');
+    VoiceConfig.setGeminiVoice(voice.slice(7));
+  } else if (voice.startsWith('perxona:')) {
+    VoiceConfig.setEngine('perxona');
+    PerxonaConfig.setVoiceId(voice.slice(8));
+  } else {
+    VoiceConfig.setEngine('');
+  }
   if (kind === '3d') {
     PerxonaConfig.setAvatarId(id);
-    PerxonaConfig.setVoiceId(document.getElementById('perxona-voice-select')?.value || '');
     PerxonaConfig.setEnabled(true);
   } else {
     // 人格の既定と同じ見た目なら上書きを消し、card.json の defaultAvatar に従わせる
@@ -143,25 +164,36 @@ function switchCharacter() {
 }
 
 /**
- * 音声テスト。クリック操作の中で再生のロックを解除してから発話させるので、
- * 「会話では鳴らないがここでは鳴る」なら会話側の解除タイミング、
- * 「ここでも鳴らない」なら音声・Key・端末側の問題、と切り分けられる。
+ * 音声テスト。選択中（未保存でも可）の声で鳴らす。クリック操作の中で再生のロックを解除してから
+ * 発話させるので、「会話では鳴らないがここでは鳴る」なら会話側の解除タイミング、
+ * 「ここでも鳴らない」なら音声・キー・端末側の問題、と切り分けられる。
  */
-async function testPerxonaVoice() {
-  if (!PerxonaConfig.isEnabled()) {
-    _perxonaStatus('3D の見た目に切り替えてから試してください', false);
+async function testVoice() {
+  const voice = document.getElementById('voice-select')?.value || '';
+  const sample = 'こんにちは、音声のテストです。聞こえていますか？';
+  if (!voice) { _perxonaStatus('音声が「なし」になっています', false); return; }
+
+  if (voice.startsWith('gemini:')) {
+    GeminiTTS.unlock();
+    _perxonaStatus('音声を作っています…');
+    const ok = await GeminiTTS.speak(sample, { voice: voice.slice(7) });
+    _perxonaStatus(ok ? '再生しました。音が出なければ端末の音量・ミュートを確認してください'
+                      : `再生に失敗しました（${GeminiTTS.lastError || '不明'}）`, ok);
+    return;
+  }
+
+  // Perxona の声は 3D の準備ができているときだけ（保存済みの声で鳴る）
+  if (!PerxonaConfig.isEnabled() || VoiceConfig.getEngine() !== 'perxona') {
+    _perxonaStatus('Perxona の声は、3D の見た目とこの声を選んで「切り替える」を押してから試してください', false);
     return;
   }
   if (typeof PerxonaStage === 'undefined' || !PerxonaStage.isReady) {
     _perxonaStatus('3D アバターがまだ準備中です。対話画面で表示されてから試してください', false);
     return;
   }
-  const voice = PerxonaConfig.getVoiceId();
-  if (!voice) { _perxonaStatus('音声が「なし」になっています。音声を選んで切り替えてください', false); return; }
-
   _perxonaStatus('発話中…（音が出るか確認してください）');
   PerxonaStage.unlockAudio();
-  const ok = await PerxonaStage.present('こんにちは、音声のテストです。聞こえていますか？');
+  const ok = await PerxonaStage.present(sample);
   if (ok) {
     _perxonaStatus('発話を送信しました。音が出なければ、端末の音量・ミュート・ブラウザのタブ消音を確認してください', true);
   } else {
@@ -178,7 +210,7 @@ document.addEventListener('perxona-failed', (e) => {
 window.savePerxonaKey = savePerxonaKey;
 window.clearPerxonaKey = clearPerxonaKey;
 window.testPerxonaKey = testPerxonaKey;
-window.testPerxonaVoice = testPerxonaVoice;
+window.testVoice = testVoice;
 window.switchCharacter = switchCharacter;
 window.initCharacterSettings = initCharacterSettings;
 initCharacterSettings();
