@@ -38,7 +38,9 @@ window.AiService = {
   async _getArchOverview() {
     if (this._archOverviewCache !== null) return this._archOverviewCache;
     try {
-      const res = await fetch('../docs/architecture/README.md');
+      // app.knowledgenote.work は portal-app/ しか配信しないため、相対パス（../docs）では届かない。
+      // 公開リポジトリの raw から読む（CORS 許可あり・アクセスキー不要）
+      const res = await fetch('https://raw.githubusercontent.com/kabotyabon/my-portal/main/docs/architecture/README.md');
       this._archOverviewCache = res.ok ? (await res.text()).slice(0, 1200) : '';
     } catch (e) {
       console.warn('Architecture context fetch error:', e);

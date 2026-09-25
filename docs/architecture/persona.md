@@ -91,6 +91,54 @@ my-portal/portal-app/assets/avatars/ ← 表示（公開）
 - 口調の指示は card.json の任意フィールド `voiceStyle`（例: "やわらかく、ゆっくり"）を `speech_metadata.style` として渡す
 - 喋るのは新しい返答だけ（起動時の挨拶・履歴の再表示では喋らない）
 
+#### 仕組みの解説 — 返答が声になるまで
+
+```mermaid
+sequenceDiagram
+  participant U as ユーザー
+  participant C as ai-chat.js
+  participant S as avatar-scene.js
+  participant T as gemini-tts.js
+  participant G as Gemini API
+  U->>C: 送信ボタンを押す
+  C->>S: unlockAudio()（操作の直後に呼ぶ）
+  S->>T: interrupt() → unlock()（前の声を止め、無音WAVを1回鳴らす）
+  C->>G: 対話（generateContent）
+  G-->>C: 返答テキスト（[表情:]・[候補:]タグ付き）
+  C->>S: speak(タグを除いた本文)
+  alt 3D 表示中
+    S->>S: PerxonaStage.present(本文)（声＋リップシンク）
+  else 2D 表示中
+    S->>T: speak(本文)
+    T->>G: POST /v1beta/interactions（response_format: audio, voice）
+    G-->>T: JSON（音声は base64 文字列）
+    T->>T: base64 → バイト列 → Blob(audio/wav) → blob: URL
+    T->>U: <audio> で再生
+  end
+```
+
+つまずきやすい点と、この実装での答え:
+
+1. **音声は「ファイル」ではなく JSON の中の文字列で返ってくる。** レスポンスの `steps[].content[]` のどこかに
+   `data`（base64）と MIME が入っている。形が変わっても拾えるよう `_findAudio()` が再帰的に探す
+2. **base64 はそのまま再生できない。** `atob()` で1文字＝1バイトの文字列に戻し、`Uint8Array` に詰め、
+   `Blob` にして `URL.createObjectURL()` で `blob:` URL を作る。これを `<audio>.src` に入れると再生できる。
+   古い URL は `revokeObjectURL()` で解放する（しないと再生のたびにメモリに溜まる）
+3. **WAV と PCM の違い。** 既定の返りは WAV（先頭44バイトのヘッダに「24kHz・モノラル・16bit」と書いてある）。
+   ストリーミング等でヘッダ無しの生 PCM（`audio/l16`）が来ると、ブラウザは形式が分からず再生できない。
+   そのときは `_pcmToWav()` が44バイトのヘッダを自前で書いて WAV に包む
+4. **ブラウザは勝手に音を鳴らせない（自動再生制限）。** 音はユーザー操作の直後にしか鳴らせないが、
+   返答が来るのは数秒後。そこで送信ボタンを押した瞬間に無音 WAV を1回鳴らし、その `<audio>` 要素を
+   「鳴らしてよい状態」にしておく。以後は同じ要素を使い回す
+5. **古い返答の声が後から鳴る問題。** 合成には1〜数秒かかるので、その間に次の送信があると順番が崩れる。
+   `_seq`（通し番号）を発話ごとに進め、届いたときに番号が変わっていたら捨てる
+6. **エンドポイントが新しい。** 以前の資料には `generateContent` に `responseModalities: ["AUDIO"]` を付ける方式が
+   載っているが、2026-09 時点の公式は `POST /v1beta/interactions`（`response_format: {type: "audio"}`・
+   `generation_config.speech_config: [{voice}]`）。エラー本文は配列（`[{error: {...}}]`）で返ることがある
+7. **話し方の指示は本文に混ぜない。** 本文は読み上げ原稿としてそのまま読まれる。口調の指示は
+   `annotations: [{type: "speech_metadata", style}]` で別に渡す（card.json の `voiceStyle`）
+
+
 ### persona-state — 記憶の実体
 
 `js/domains/persona-state.js` が管理。置き場は `vault/persona-state/`（private 側）。

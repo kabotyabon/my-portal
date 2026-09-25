@@ -2,38 +2,47 @@
 
 日記・タスク・AIアバターの個人用ポータルの設計ハンドブック。**「いまの姿」を常に正として維持する**リビングドキュメントで、テーマ別の6ページ＋決定ログ1枚で構成する。
 
-- アプリ本体: `my-portal`（public）— GitHub Pages 配信の静的Webアプリ。ビルド工程・バックエンドなし。この設計ドキュメントもここ（`docs/architecture/`）に置く
-- データ: `my-portal-vault`（private）— 日記・タスク・会話ログ・記憶
+- アプリ本体: `my-portal`（public）— ビルド工程なしの静的Webアプリ。`app.knowledgenote.work`（Cloudflare）で配信し、Pixel には TWA で入れる
+- 中間サーバー: `worker-proxy/`（`api.knowledgenote.work`）— vault への読み書きを中継。GitHub PAT はここにだけある
+- データ: `my-portal-vault`（private）— 日記・タスク・会話ログ・人格（card.json）・記憶
+- キャラクターは3層: 人格（vault に1つ）／見た目（2D 立ち絵 or 3D Perxona）／声（2D→Gemini TTS、3D→Perxona）
 
 ## 全体構成
 
 ```mermaid
 graph LR
-  U["ユーザー<br>(ブラウザ / PWA)"] --> P["ポータル<br>GitHub Pages 静的アプリ<br>(my-portal / public)"]
-  P -- "相対 fetch" --> PA["assets/avatars/&lt;slug&gt;/<br>見た目（立ち絵・scene.json）"]
-  P -- "Contents API + PAT" --> V[("my-portal-vault (private)<br>diary / task / conversations /<br>persona(人格) / persona-state / knowledge")]
-  P -- "Function Calling" --> G["Gemini API"]
+  U["ユーザー<br>(ブラウザ / TWA)"] --> P["ポータル（静的アプリ）<br>app.knowledgenote.work"]
+  P -- "相対 fetch" --> PA["assets/avatars/&lt;slug&gt;/<br>2D の見た目"]
+  P -- "X-Portal-Key" --> W["中間サーバー<br>api.knowledgenote.work"]
+  W -- "GitHub PAT" --> V[("my-portal-vault (private)<br>diary / task / conversations /<br>persona / persona-state / knowledge")]
+  P -- "Gemini キー" --> G["Gemini API<br>対話(Function Calling)・TTS"]
+  P -- "Publishable Key" --> X["Perxona<br>3D アバター＋声"]
 ```
+
+- 学習用の解説（仕組みの説明・用語・演習）は vault の `knowledge/my-portalアーキテクチャ学習ノート.md` にある
 
 ```mermaid
 graph TD
   subgraph app ["portal-app/js"]
     UI["ui/<br>対話画面(ai-chat)・日記(report)・<br>過去の記録(archive)・設定(settings)"]
-    DM["domains/<br>ai-service・persona-state・reply-feedback・<br>conversation-log・diary/task-service・demo-script"]
+    DM["domains/<br>ai-service・persona-state・reply-feedback・<br>conversation-log・diary/task-service・counsel-mode"]
     AG["agent/<br>tool-definitions・tool-dispatcher"]
-    CO["core/<br>app・config・gemini・github"]
+    CO["core/<br>app・config・gemini・perxona-config"]
+    PR["presenter/<br>gemini-tts・perxona-stage"]
     ST["storage/<br>github-storage・各repository"]
     UI --> DM
     UI --> AG
     AG --> ST
     DM --> ST
     UI --> CO
+    UI --> PR
   end
-  ST --> API["GitHub Contents API"]
-  CO --> GEM["Gemini API"]
+  ST --> API["中間サーバー → GitHub Contents API"]
+  CO --> GEM["Gemini API（対話）"]
+  PR --> TTS["Gemini API（TTS）/ Perxona"]
 ```
 
-データの流れの要点: ユーザーの発話 → `ai-chat.js` がシステムプロンプト（人格＋記憶＋日時＋規律）を組み立て Gemini を直接呼ぶ → ツール呼び出しは `tool-dispatcher` が `github-storage` 経由で vault を読み書き → 会話は1往復ごとに全文が vault の会話ログへ自動追記される。
+データの流れの要点: ユーザーの発話 → `ai-chat.js` がシステムプロンプト（人格＋記憶＋日時＋規律）を組み立て Gemini を直接呼ぶ → ツール呼び出しは `tool-dispatcher` が `github-storage` 経由（中間サーバー）で vault を読み書き → 返答は画面に出すと同時に `avatar-scene.js` の `speak()` が見た目に応じて Gemini TTS か Perxona で読み上げる → 会話は1往復ごとに全文が vault の会話ログへ自動追記される。
 
 ## ページ案内
 
