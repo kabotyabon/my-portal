@@ -13,16 +13,20 @@ const GEMINI_TTS_MODEL = 'gemini-3.8-flash-lite-tts';
 // 2D のときの声。未設定・空文字は「なし」（音声合成は課金されるので既定は無音＝明示的に選んだときだけ鳴らす）
 const GEMINI_VOICE_KEY = 'gemini_tts_voice';
 
-// Studio voices（名前は API の値そのまま。説明は公式の特徴語の意訳）
+// Studio voices [名前, 性別, 特徴]。名前は API の値そのまま、特徴は公式の特徴語の意訳。
+// 性別は同名の Google Cloud TTS（Chirp 3 HD）の一覧による
 const GEMINI_TTS_VOICES = [
-  ['Leda', '若々しい'], ['Aoede', '軽やか'], ['Kore', 'しっかり'], ['Zephyr', '明るい'],
-  ['Puck', '元気'], ['Autonoe', '明るい'], ['Despina', 'なめらか'], ['Erinome', 'クリア'],
-  ['Laomedeia', '快活'], ['Achernar', 'やわらか'], ['Vindemiatrix', 'おだやか'], ['Sulafat', 'あたたかい'],
-  ['Callirrhoe', 'のんびり'], ['Umbriel', 'のんびり'], ['Achird', '親しげ'], ['Sadachbia', '生き生き'],
-  ['Pulcherrima', 'まっすぐ'], ['Schedar', '落ち着き'], ['Gacrux', '大人びた'], ['Enceladus', '息まじり'],
-  ['Charon', '知的'], ['Rasalgethi', '知的'], ['Sadaltager', '博識'], ['Iapetus', 'クリア'],
-  ['Algieba', 'なめらか'], ['Orus', 'しっかり'], ['Alnilam', 'しっかり'], ['Fenrir', '興奮ぎみ'],
-  ['Algenib', 'しゃがれ'], ['Zubenelgenubi', 'くだけた']
+  ['Leda', 'female', '若々しい'], ['Aoede', 'female', '軽やか'], ['Kore', 'female', 'しっかり'],
+  ['Zephyr', 'female', '明るい'], ['Autonoe', 'female', '明るい'], ['Despina', 'female', 'なめらか'],
+  ['Erinome', 'female', 'クリア'], ['Laomedeia', 'female', '快活'], ['Achernar', 'female', 'やわらか'],
+  ['Vindemiatrix', 'female', 'おだやか'], ['Sulafat', 'female', 'あたたかい'], ['Callirrhoe', 'female', 'のんびり'],
+  ['Pulcherrima', 'female', 'まっすぐ'], ['Gacrux', 'female', '大人びた'],
+  ['Puck', 'male', '元気'], ['Achird', 'male', '親しげ'], ['Sadachbia', 'male', '生き生き'],
+  ['Umbriel', 'male', 'のんびり'], ['Zubenelgenubi', 'male', 'くだけた'], ['Schedar', 'male', '落ち着き'],
+  ['Iapetus', 'male', 'クリア'], ['Algieba', 'male', 'なめらか'], ['Charon', 'male', '知的'],
+  ['Rasalgethi', 'male', '知的'], ['Sadaltager', 'male', '博識'], ['Orus', 'male', 'しっかり'],
+  ['Alnilam', 'male', 'しっかり'], ['Enceladus', 'male', '息まじり'], ['Fenrir', 'male', '興奮ぎみ'],
+  ['Algenib', 'male', 'しゃがれ']
 ];
 
 // 無音の極小 WAV。ユーザー操作の直後に1回鳴らして、同じ <audio> の自動再生制限を解除する

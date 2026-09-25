@@ -89,8 +89,11 @@ function _renderVoiceOptions() {
       `<option value="perxona:${_escAttr(v.id)}">${_escAttr(v.name)}（${_escAttr(v.provider)}）</option>`).join('');
     if (PerxonaConfig.getVoiceId()) current = `perxona:${PerxonaConfig.getVoiceId()}`;
   } else if (getGeminiKey()) {
-    html += GEMINI_TTS_VOICES.map(([name, desc]) =>
-      `<option value="gemini:${_escAttr(name)}">${_escAttr(name)}（${_escAttr(desc)}）</option>`).join('');
+    const group = (gender, label) => `<optgroup label="${label}">` + GEMINI_TTS_VOICES
+      .filter(([, g]) => g === gender)
+      .map(([name, , desc]) => `<option value="gemini:${_escAttr(name)}">${_escAttr(name)}（${label}・${_escAttr(desc)}）</option>`)
+      .join('') + '</optgroup>';
+    html += group('female', '女性') + group('male', '男性');
     if (VoiceConfig.getGeminiVoice()) current = `gemini:${VoiceConfig.getGeminiVoice()}`;
   }
   select.innerHTML = html;
