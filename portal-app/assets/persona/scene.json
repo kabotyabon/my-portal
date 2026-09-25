@@ -4,7 +4,7 @@
   "comment": "アバターの表情差分と背景を宣言的に定義する（Ambient Companion 改修）。表情画像が未配置でも file を解決できなければ fallback 画像＋CSS 疑似表情で動作する。各表情の bg / glow / filter / breath は舞台（背景・グロー・立ち絵フィルタ・呼吸の秒数）の値。背景設定が mood のとき bg も表情に追従し、具体的な背景（night 等）を選ぶと bg だけそちらが優先される。file / fallbackFile はこのファイルが置かれたペルソナディレクトリからの相対パス（basePath は書かない）。inference はタグ無し応答の表情推定ルール（上から順に照合・patterns は正規表現）。この人格の語彙に合わせて書く。",
   "fallbackFile": "avatar.png",
   "defaultExpression": "neutral",
-  "defaultBackground": "mood",
+  "defaultBackground": "auto",
   "expressions": [
     {
       "id": "neutral", "label": "通常", "file": "expressions/neutral.png", "aliases": ["普通", "平常", "normal"],
