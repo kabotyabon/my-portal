@@ -26,7 +26,14 @@
 - **正式な公開URLは `https://app.knowledgenote.work/`（2026-09-25〜、Cloudflare Workers Static Assets配信）**
 - 旧URL `…/my-portal/portal-app/`（GitHub Pages）も並行して生きている（`.github/workflows/deploy-pages.yml`は現役のまま）。ミラー・避難先として残す
 - 2つの公開URLはブラウザのオリジンが別なので、**localStorage（アクセスキー・Geminiキー・下書き）は共有されない**。どちらでも初回は設定し直しが必要
-- TWA・PWAは今後 `app.knowledgenote.work` を正として使う
+- TWA・PWAは `app.knowledgenote.work` を正として使う
+
+### TWA（Androidアプリ化）
+
+- PWABuilder で `app.knowledgenote.work` から生成した TWA を Pixel にサイドロードして使う（ストア公開はしていない）
+- パッケージ名 `work.knowledgenote.app.twa`。署名鍵（`signing.keystore`・`signing-key-info.txt`）は生成zipに同梱され、**リポジトリには入れない**。鍵を失うと同じパッケージ名で更新できなくなるので別途保管する
+- Digital Asset Links は `portal-app/.well-known/assetlinks.json` として配信（`https://app.knowledgenote.work/.well-known/assetlinks.json`）。これが署名鍵のSHA-256と一致しないと、TWAはフルスクリーンにならずURLバー付きのCustom Tabs表示に落ちる
+- 鍵を作り直した場合・ドメインを変えた場合は、TWAの再生成と assetlinks.json の差し替え・再デプロイがセット
 
 ### Cloudflare Workers Static Assets デプロイ（`web-deploy/`）
 
@@ -50,7 +57,7 @@
 - アイコン（192/512/512 maskable）を`assets/icons/`に用意済み（2026-09-25）。生成スクリプトは`tools/generate-icons.ps1`（.NET System.Drawingで直接描画。三日月＋夜のグラデーション、Ambient Companionのテーマカラー準拠）
 - アイコン追加により、Android Chromeでの正式な「インストール」導線（`beforeinstallprompt`）が機能する条件が揃った
 
-### 中間サーバー（Cloudflare Workers プロキシ）— デプロイ済み・アプリ側は未接続
+### 中間サーバー（Cloudflare Workers プロキシ）
 
 Web/モバイルの分離（モバイルはTWA→React Native、Web版はNext.js化を検討中）に伴い、
 GitHub PAT をクライアント（ブラウザ・将来のモバイルアプリ）に置けなくなるため、
@@ -59,14 +66,13 @@ GitHubへの読み書きを中継する薄いプロキシを `worker-proxy/` に
 - Cloudflare Workers上で動く。GitHub PATは Worker の Secret（`GITHUB_PAT`）としてのみ保持し、クライアントには渡さない
 - クライアント⇄Worker間は別の合言葉（Secret `PORTAL_API_KEY`、`X-Portal-Key`ヘッダーで送る）で認証する（GitHub PATとは無関係）。
   比較時は両辺をtrimする（`wrangler secret put`へのCLI入力経路によっては末尾に改行が混入しうるため）
-- エンドポイントは `GET/PUT/DELETE /api/vault/contents/<path>` と `POST /api/vault/dispatch/daily-report` の2系統。
+- エンドポイントは `GET/PUT/DELETE /api/vault/contents/<path>` のみ。
   GitHub Contents APIのレスポンスをほぼ透過するだけの薄い設計（詳細は `worker-proxy/README.md`）
 - ドメイン `knowledgenote.work` を取得・Cloudflareへネームサーバー移行済み（2026-09-24）。
   Workerは **`api.knowledgenote.work` にカスタムドメインで紐付け済み**（デプロイ・疎通確認済み、2026-09-25）。
   Cloudflareのカスタムドメインはワイルドカード・パス付きパターンを許可しないため、`wrangler.toml`の`routes`は
   ホスト名のみ（`api.knowledgenote.work`、末尾に`/*`を付けない）で書くこと
-- **`portal-app` 側をこのプロキシ経由に差し替える変更はまだ未着手**。今の `portal-app` は引き続きブラウザから
-  直接GitHubを叩いており、PATはブラウザに残ったまま。プロキシ自体は疎通確認済みで、あとはアプリ側の接続変更のみ
+- `portal-app` は全読み書きをこのプロキシ経由で行う（2026-09-25切替済み）。ブラウザにGitHub PATは無い
 
 旧来の「ホスティングごとCloudflareへ移しポータルをAccessで閉じる」という構想（下記2026-08-08の変遷）とは
 **スコープを分離**した。まず「PATを隠す」ことだけを独立したWorkerで解決し、ポータル自体の配信先
@@ -74,6 +80,8 @@ GitHubへの読み書きを中継する薄いプロキシを `worker-proxy/` に
 
 ## 変遷
 
+- **2026-09-25** — TWAを `app.knowledgenote.work` 向けに再生成（パッケージ `work.knowledgenote.app.twa`）し、
+  `portal-app/.well-known/assetlinks.json` を配信。Google の Digital Asset Links API で署名一致を確認
 - **2026-09-25** — ポータル本体（`portal-app/`）をCloudflare Workers Static Assetsで`app.knowledgenote.work`へ
   デプロイ（`web-deploy/`）。TWA化にあたり、GitHub Pages（`kabotyabon.github.io`）ではなく取得済みの独自ドメインを
   使いたいという要望から。当初`wrangler pages project create`で試みたところ、リポジトリルート全体を
@@ -97,7 +105,7 @@ GitHubへの読み書きを中継する薄いプロキシを `worker-proxy/` に
 
 ## 既知の問題・残課題
 
-- **中間サーバーはデプロイ・疎通確認済みだが未接続。** `worker-proxy/`はCloudflareへデプロイ済み・`api.knowledgenote.work`経由で動作確認済み。残るのは `portal-app` 側のGitHub直叩き箇所（`js/storage/github-storage.js`・`js/core/github.js`）をこのプロキシ経由へ差し替える変更のみ。それが終わるまでPATはブラウザに残ったまま
+- **TWAはサイドロード運用。** Play ストア未公開。アプリ更新（アイコン・名前等のネイティブ側変更）は再生成＋再インストール。Web側の変更は再デプロイだけで反映される
 - **wranglerのメジャーバージョンが古い（3.114.17、4系が最新）。** 実害は今のところ無いが、次にWorkerを触るときにアップデートを検討する
 - **ポータル本体のCloudflare移行（ホスティング・Access化）は保留のまま。** 上記の中間サーバーとは別の話。着手時の地雷は整理済み: オリジン変更で localStorage（PAT・APIキー・下書き）が全消え／PWA は入れ直し／`workers.dev` を塞がないと Access が素通し／Access + iOS PWA の相性は最初に実機検証
 - **コンテンツハッシュ（ビルド工程）未導入。** ファイル削除を伴う変更は「10分の猶予」という運用でしのいでいる。ビルド工程は Cloudflare 移行時の CI 作り直しとあわせて検討

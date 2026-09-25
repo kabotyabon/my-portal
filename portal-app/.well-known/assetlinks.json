@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "work.knowledgenote.app.twa",
+        "sha256_cert_fingerprints": ["99:87:C9:D4:D7:30:B6:AA:75:6B:E3:EC:3A:00:36:08:50:72:28:E5:59:CF:35:05:D7:96:44:58:A7:2A:12:F8"]
+      }
+    }]
