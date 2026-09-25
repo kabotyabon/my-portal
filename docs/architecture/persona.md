@@ -30,7 +30,7 @@ my-portal/portal-app/assets/avatars/ ← 表示（公開）
 ```
 
 - 見た目の選択は localStorage の `active_avatar_slug`（未設定なら人格の `defaultAvatar`）。解決は `js/core/config.js` の `getAvatarDir()` に集約
-- 設定画面「キャラクターの見た目（2D）」で選び、`location.reload()` で読み直す
+- 設定画面「キャラクター」の見た目一覧で選び、`location.reload()` で読み直す（下記「設定画面」）
 - 人格を替えたいときは `vault/persona/card.json` 自体を書き換える。見た目を足すときは `assets/avatars/<slug>/` を置いて `index.json` に1行
 - 見た目は公開面に出るので、オリジナル作品（または権利処理済み）の素材だけを置く
 - 形式の詳細は `my-portal/docs/persona-pack-spec.md`（§2 card.json / §3 scene.json / §4 画像要件 / §5 タグプロトコル）:
@@ -51,21 +51,29 @@ my-portal/portal-app/assets/avatars/ ← 表示（公開）
 
 2D 立ち絵＋CSS 疑似表情に加え、[Perxona Connect Kit](https://connect.perxona.ai/)（XRSPACE、Apache-2.0）による
 3D アバター描画＋TTS＋自動リップシンクを選択式で使える。パック仕様（`scene.json` の `renderer` 切替）ではなく、
-**設定画面のグローバルトグル**として実装した。
+設定画面の見た目一覧に「〇〇（3D）」として並ぶ（下記「設定画面」）。
 
 - 該当ファイル: `js/core/perxona-config.js`（Key・Avatar/Scene/Voice ID を localStorage に保持）・
   `js/presenter/perxona-stage.js`（`<sv-presenter>` の初期化・発話・中断）・
   `js/ui/perxona-settings.js`（設定画面）・`css/perxona.css`・`avatars.html`（アバター一覧・ID 確認用）
 - Avatar・Voice は Connect API のカタログ（`/assets/avatars`・`/voices?language=ja`）を取得してプルダウンで選ぶ
-  （2026-09-25〜。Avatar は以前 ID 手入力だった）。Scene ID はカタログ取得APIが未確認のためテキスト入力のまま
-- 有効化条件は `PerxonaConfig.isEnabled()`: Publishable Key が設定済みかつ設定画面のスイッチが ON
-  （Key があれば既定 ON）
+  （Avatar は以前 ID 手入力だった）。Scene ID は静的（`PerxonaConfig.DEFAULTS.sceneId`。背景は舞台側の scene.json が担う）
+- 有効化条件は `PerxonaConfig.isEnabled()`: Publishable Key が設定済みかつ見た目で 3D を選んでいる
 - `avatar-scene.js` が `mountPerxona()` / `unmountPerxona()` で 2D と 3D の表示を切り替える。
   初期化失敗（`CONNECT_KEY_REJECTED` / SDK 読み込み失敗など）は `onFail` 経由で 2D 立ち絵へ自動フォールバックする
 - Key は Publishable Key のみを使う（Secret Key は使わない）。ブラウザにしか置けないため、
   ドメイン制限を Console 側で必ず設定する運用を前提にする
 - Region は `asia` 固定（Console の Key 発行元と SDK の CDN/API を一致させる必要があるため）
 - 表情タグ（`[表情:]`）に連動したモーション指定はこの版では未実装。発話中は `present(text)` の自動選択に任せる
+
+### 設定画面
+
+- **キー欄は3つとも同じ形**（アクセスキー・Gemini・Perxona）: 未設定なら入力欄＋保存、設定済みなら「設定済みです」。
+  下に操作行（接続テスト・削除・結果表示）。共通クラスは `.key-set-msg` / `.key-actions` / `.key-test-status`（base.css）
+- **キャラクター欄**: 見た目を1つの一覧で選ぶ。2D は `assets/avatars/index.json` から「こはる（2D）」、
+  Perxona キーがあるときだけ Connect API カタログから「〇〇（3D）」が加わる。値は `2d:<slug>` / `3d:<avatar_id>`
+- 音声の選択と音声テストは 3D を選んでいるときだけ出る（Perxona の声は 3D 表示とセットでしか鳴らないため）
+- 「切り替える」で保存して `location.reload()`。2D を選ぶと 3D はオフ、3D を選ぶとオン（2D の見た目は失敗時のフォールバックとして残る）
 
 ### persona-state — 記憶の実体
 
@@ -100,6 +108,8 @@ my-portal/portal-app/assets/avatars/ ← 表示（公開）
 
 ## 変遷
 
+- **2026-09-25** 設定画面を整理。キー欄（Gemini・Perxona）の接続テスト行を揃え、「2D/3D スイッチ＋別々の見た目指定」を
+  「こはる（2D）」「〇〇（3D）」が並ぶ1つの一覧に統合（3D は Perxona キーがあるときだけ出る）。Scene ID 入力欄は削除
 - **2026-09-25** 人格と表示を分離。`card.json` を公開側から `vault/persona/card.json` へ移し中間サーバー経由で読む。
   人格は vault につき1つとし、設定画面での人格選択は廃止（こまるの人格定義は外した。見た目は残る）。
   公開側は見た目専用の `assets/avatars/<slug>/` に改名し、`card.json` の `defaultAvatar` と設定画面の上書きで組み合わせる。

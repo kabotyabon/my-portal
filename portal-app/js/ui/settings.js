@@ -76,34 +76,12 @@ function initSettingsTab() {
   showModalTokenUI();
   showModalGeminiUI();
   renderReplyFeedbackTally();
-  initPersonaSelect();
+  if (typeof initCharacterSettings === 'function') initCharacterSettings();
 
   const statusEl = document.getElementById('modal-status');
   if (statusEl) statusEl.textContent = '';
 }
 
-// ---- 見た目の選択 ----
-// 人格は vault につき1つなので選ばない。選べるのは見た目（公開の一覧）だけ。
-async function initPersonaSelect() {
-  const avatarSel = document.getElementById('avatar-select');
-  if (!avatarSel) return;
-  try {
-    const list = await fetchAvatarList();
-    avatarSel.innerHTML = '<option value="">人格の既定に合わせる</option>'
-      + list.map(p => `<option value="${escapeHtml(p.slug)}">${escapeHtml(p.name)}</option>`).join('');
-    avatarSel.value = getAvatarOverride();
-  } catch (e) {
-    console.warn('見た目一覧の取得に失敗しました:', e);
-  }
-}
-
-function switchAvatar() {
-  const avatarSel = document.getElementById('avatar-select');
-  if (!avatarSel) return;
-  setAvatarOverride(avatarSel.value);
-  location.reload();
-}
-window.switchAvatar = switchAvatar;
 
 // ---- 返信候補から拾ったフィードバック ----
 function renderReplyFeedbackTally() {
@@ -193,6 +171,9 @@ function showModalGeminiUI() {
   const has = !!getGeminiKey();
   document.getElementById('modal-gemini-set').classList.toggle('is-hidden', !has);
   document.getElementById('modal-gemini-unset').classList.toggle('is-hidden', has);
+  document.getElementById('gemini-clear-btn')?.classList.toggle('is-hidden', !has);
+  const st = document.getElementById('gemini-test-status');
+  if (st) st.textContent = '';
 }
 
 async function saveGeminiKey() {

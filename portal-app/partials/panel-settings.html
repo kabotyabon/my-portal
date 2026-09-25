@@ -8,8 +8,10 @@
   <div class="modal-section" style="margin-bottom:20px;">
     <div class="modal-label">アクセスキー</div>
     <div id="modal-pat-set" class="is-hidden">
-      <div style="font-size:12.5px;color:var(--green);margin-bottom:8px;font-weight:700;">アクセスキーが設定済みです</div>
-      <button class="btn-quiet danger" onclick="clearToken()">アクセスキーを削除</button>
+      <div class="key-set-msg">設定済みです</div>
+      <div class="key-actions">
+        <button class="btn-quiet danger" onclick="clearToken()">削除</button>
+      </div>
     </div>
     <div id="modal-pat-unset">
       <div class="token-row">
@@ -21,22 +23,11 @@
     <div id="modal-status" class="modal-status"></div>
   </div>
 
-  <!-- 見た目（2D立ち絵・公開素材）。人格は vault につき1つなので選ばない。3D表示と音声は下の Perxona 欄 -->
-  <div class="modal-section" style="margin-bottom:20px;">
-    <div class="modal-label">キャラクターの見た目（2D）</div>
-    <div class="token-row">
-      <select id="avatar-select" style="flex:1;"></select>
-      <button class="btn-primary" onclick="switchAvatar()">切り替える</button>
-    </div>
-    <p class="modal-note">切り替えるとページが再読み込みされます</p>
-  </div>
-
   <!-- Gemini API Key -->
   <div class="modal-section" style="margin-bottom:20px;">
     <div class="modal-label">Gemini API キー</div>
     <div id="modal-gemini-set" class="is-hidden">
-      <div style="font-size:12.5px;color:var(--green);margin-bottom:8px;font-weight:700;">APIキーが設定済みです</div>
-      <button class="btn-quiet danger" onclick="clearGeminiKey()">削除</button>
+      <div class="key-set-msg">設定済みです</div>
     </div>
     <div id="modal-gemini-unset">
       <div class="token-row">
@@ -45,39 +36,50 @@
       </div>
       <p class="modal-note">aistudio.google.com で発行できます</p>
     </div>
-    <div id="gemini-test-row" class="token-row" style="margin-top:8px;align-items:center;">
-      <button class="btn-quiet" onclick="testGeminiKey()" id="gemini-test-btn">接続テスト</button>
-      <span id="gemini-test-status" style="font-size:12px;margin-left:8px;"></span>
+    <div class="key-actions">
+      <button class="btn-quiet" onclick="testGeminiKey()">接続テスト</button>
+      <button class="btn-quiet danger" id="gemini-clear-btn" onclick="clearGeminiKey()">削除</button>
+      <span id="gemini-test-status" class="key-test-status"></span>
     </div>
   </div>
 
-  <!-- Perxona 3D アバター＋音声 -->
+  <!-- Perxona Publishable Key（あると「キャラクター」に 3D と音声が出る） -->
   <div class="modal-section" style="margin-bottom:20px;">
-    <div class="modal-label">3D アバター・音声（Perxona）</div>
-    <div class="perxona-field">
-      <label for="perxona-key-input">Publishable Key</label>
-      <input id="perxona-key-input" type="password" placeholder="pxc_...">
-      <p class="modal-note">Console の Organization → Integration → Connect API keys で <strong>Publishable</strong> を作成し、Allowed Domains にこのサイトのホスト名（例: app.knowledgenote.work）を登録します。Secret Key は入れないでください</p>
+    <div class="modal-label">Perxona キー（3D アバター・音声）</div>
+    <div id="modal-perxona-set" class="is-hidden">
+      <div class="key-set-msg">設定済みです</div>
     </div>
-    <div class="perxona-field">
-      <label for="perxona-avatar-select">Avatar</label>
-      <select id="perxona-avatar-select"><option value="">（Keyを保存すると一覧を取得します）</option></select>
-      <p class="modal-note">画像つきで選びたい場合は<a href="avatars.html" target="_blank" rel="noopener">アバター一覧</a>もどうぞ</p>
+    <div id="modal-perxona-unset">
+      <div class="token-row">
+        <input id="perxona-key-input" class="token-input" type="password" placeholder="pxc_...">
+        <button class="btn-primary" onclick="savePerxonaKey()">保存</button>
+      </div>
+      <p class="modal-note">Console の Organization → Integration → Connect API keys で <strong>Publishable</strong> を作成し、Allowed Domains にこのサイトのホスト名（app.knowledgenote.work）を登録します。Secret Key は入れないでください</p>
     </div>
-    <div class="perxona-field">
-      <label for="perxona-scene-input">Scene ID</label>
-      <input id="perxona-scene-input" type="text" placeholder="01M1JHG7TXY8E6AHH12VQYDQB8">
+    <div class="key-actions">
+      <button class="btn-quiet" onclick="testPerxonaKey()">接続テスト</button>
+      <button class="btn-quiet danger" id="perxona-clear-btn" onclick="clearPerxonaKey()">削除</button>
+      <span id="perxona-test-status" class="key-test-status"></span>
     </div>
+  </div>
+
+  <!-- キャラクター。人格は vault につき1つなので選ばない。見た目は 2D 立ち絵と（Perxona キーがあれば）3D を1つの一覧で選ぶ -->
+  <div class="modal-section" style="margin-bottom:20px;">
+    <div class="modal-label">キャラクター</div>
     <div class="perxona-field">
-      <label for="perxona-voice-select">音声</label>
+      <label for="avatar-select">見た目</label>
+      <select id="avatar-select"></select>
+    </div>
+    <div class="perxona-field" id="voice-field">
+      <label for="perxona-voice-select">音声（3D のとき）</label>
       <select id="perxona-voice-select"><option value="">なし（無音）</option></select>
     </div>
-    <label class="perxona-inline"><input type="checkbox" id="perxona-enabled"> 3D アバターを使う（オフで従来の 2D 立ち絵）</label>
-    <div class="token-row">
-      <button class="btn-primary" onclick="savePerxonaSettings()">保存して反映</button>
-      <button class="btn-quiet" onclick="testPerxonaVoice()">🔊 音声テスト</button>
+    <div class="key-actions">
+      <button class="btn-primary" onclick="switchCharacter()">切り替える</button>
+      <button class="btn-quiet" id="voice-test-btn" onclick="testPerxonaVoice()">音声テスト</button>
+      <span id="perxona-status" class="key-test-status"></span>
     </div>
-    <div id="perxona-status" class="perxona-status"></div>
+    <p class="modal-note">切り替えるとページが再読み込みされます。音声テストは 3D 表示中に使えます</p>
   </div>
 
   <!-- 「アバターの表情と舞台」セクション（背景セレクタ・表情プレビュー）は 2026-08-19 に削除。
@@ -92,5 +94,5 @@
 
 </div>
 
-<script src="js/ui/settings.js?v=20260925e"></script>
-<script src="js/ui/perxona-settings.js?v=20260925"></script>
+<script src="js/ui/settings.js?v=20260925f"></script>
+<script src="js/ui/perxona-settings.js?v=20260925b"></script>
