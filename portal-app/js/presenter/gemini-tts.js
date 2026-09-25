@@ -1,7 +1,7 @@
 // =====================
 // Gemini TTS（音声層・2026-09-25〜）
 // =====================
-// 返答を Gemini の音声合成で読み上げる。表示（2D / 3D）とは独立に選べる音声エンジン。
+// 返答を Gemini の音声合成で読み上げる。**2D 表示のときの声**（3D のときは Perxona 固有の声を使う）。
 // キーは既存の Gemini API キー（localStorage・秘匿扱い）をそのまま使う。
 //
 // API: POST /v1beta/interactions（response_format: audio）。既定の返りは WAV（24kHz / mono / 16bit）。
@@ -10,11 +10,8 @@
 
 const GEMINI_TTS_MODEL = 'gemini-3.8-flash-lite-tts';
 
-// 音声エンジンの選択。'' = なし / 'gemini' / 'perxona'
-const VOICE_KEYS = {
-  ENGINE: 'voice_engine',
-  GEMINI_VOICE: 'gemini_tts_voice'
-};
+// 2D のときの声。未設定・空文字は「なし」（音声合成は課金されるので既定は無音＝明示的に選んだときだけ鳴らす）
+const GEMINI_VOICE_KEY = 'gemini_tts_voice';
 
 // Studio voices（名前は API の値そのまま。説明は公式の特徴語の意訳）
 const GEMINI_TTS_VOICES = [
@@ -27,22 +24,16 @@ const GEMINI_TTS_VOICES = [
   ['Algieba', 'なめらか'], ['Orus', 'しっかり'], ['Alnilam', 'しっかり'], ['Fenrir', '興奮ぎみ'],
   ['Algenib', 'しゃがれ'], ['Zubenelgenubi', 'くだけた']
 ];
-const GEMINI_TTS_DEFAULT_VOICE = 'Leda';
 
 // 無音の極小 WAV。ユーザー操作の直後に1回鳴らして、同じ <audio> の自動再生制限を解除する
 const SILENT_WAV = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAwF0AAIC7AAACABAAZGF0YQAAAAA=';
 
 const VoiceConfig = {
-  getEngine() {
-    const v = localStorage.getItem(VOICE_KEYS.ENGINE);
-    if (v !== null) return v;
-    // 未設定（この機能より前からの利用者）: 3D で Perxona の声を使っていたならそれを引き継ぐ
-    return (typeof PerxonaConfig !== 'undefined' && PerxonaConfig.isEnabled() && PerxonaConfig.getVoiceId()) ? 'perxona' : '';
-  },
-  setEngine(v) { localStorage.setItem(VOICE_KEYS.ENGINE, v || ''); },
-  getGeminiVoice() { return localStorage.getItem(VOICE_KEYS.GEMINI_VOICE) || GEMINI_TTS_DEFAULT_VOICE; },
-  setGeminiVoice(v) { localStorage.setItem(VOICE_KEYS.GEMINI_VOICE, v || GEMINI_TTS_DEFAULT_VOICE); }
+  getGeminiVoice() { return localStorage.getItem(GEMINI_VOICE_KEY) || ''; },
+  setGeminiVoice(v) { localStorage.setItem(GEMINI_VOICE_KEY, v || ''); }
 };
+// 一時期だけ存在した「音声エンジン」設定の掃除（音声は見た目に紐づく方式になった）
+localStorage.removeItem('voice_engine');
 
 /** 読み上げ用に本文を整える（Markdown 記号・URL・絵文字は声にすると邪魔） */
 function _ttsCleanText(text) {
@@ -113,7 +104,8 @@ const GeminiTTS = {
   async speak(text, opts = {}) {
     const key = typeof getGeminiKey === 'function' ? getGeminiKey() : '';
     const t = _ttsCleanText(text);
-    if (!key || !t) return false;
+    const voice = opts.voice || VoiceConfig.getGeminiVoice();
+    if (!key || !t || !voice) return false;
     this.interrupt();
     const seq = this._seq;
 
@@ -129,7 +121,7 @@ const GeminiTTS = {
           model: GEMINI_TTS_MODEL,
           input: [{ type: 'user_input', content: [content] }],
           response_format: { type: 'audio' },
-          generation_config: { speech_config: [{ voice: opts.voice || VoiceConfig.getGeminiVoice() }] }
+          generation_config: { speech_config: [{ voice }] }
         })
       });
       if (!res.ok) {

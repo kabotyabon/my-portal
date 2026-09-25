@@ -266,21 +266,21 @@ window.AvatarScene = {
   },
 
   /**
-   * 返答を喋らせる（表情・候補タグ除去済みの本文を渡すこと）。音声層は表示と独立:
-   *   - 'gemini'  … Gemini TTS。2D / 3D どちらでも鳴る（3D はリップシンクなし）
-   *   - 'perxona' … 3D の準備ができているときだけ、Perxona が声＋リップシンクで喋る
+   * 返答を喋らせる（表情・候補タグ除去済みの本文を渡すこと）。声は見た目に紐づく:
+   *   - 3D（Perxona）表示中 … Perxona 固有の声＋リップシンク
+   *   - 2D 表示中           … Gemini TTS（声を選んでいるときだけ）。3D の初期化に失敗して 2D に戻ったときも同じ
+   *   - 3D 読み込み中       … 喋らない
    */
   speak(text) {
     const t = String(text || '').trim();
     if (!t) return;
-    const engine = typeof VoiceConfig !== 'undefined' ? VoiceConfig.getEngine() : 'perxona';
-    if (engine === 'gemini' && typeof GeminiTTS !== 'undefined') {
-      GeminiTTS.speak(t);
+    if (this._perxona === 'ready' && typeof PerxonaStage !== 'undefined') {
+      PerxonaStage.interrupt();
+      PerxonaStage.present(t);
       return;
     }
-    if (this._perxona !== 'ready' || typeof PerxonaStage === 'undefined') return;
-    PerxonaStage.interrupt();
-    PerxonaStage.present(t);
+    if (this._perxona === 'loading') return;
+    if (typeof GeminiTTS !== 'undefined') GeminiTTS.speak(t);
   },
 
   /** ユーザー操作の直後に呼ぶ。応答待ちの後では自動再生制限を解除できない。 */

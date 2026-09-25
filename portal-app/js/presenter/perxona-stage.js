@@ -81,9 +81,7 @@ window.PerxonaStage = {
         avatarId: PerxonaConfig.getAvatarId(),
         sceneId:  PerxonaConfig.getSceneId()
       };
-      // 音声エンジンが Perxona のときだけ声を付ける（Gemini TTS を選んでいれば 3D は無音で、声は GeminiTTS が出す）
-      const usePerxonaVoice = typeof VoiceConfig === 'undefined' || VoiceConfig.getEngine() === 'perxona';
-      const voiceId = usePerxonaVoice ? PerxonaConfig.getVoiceId() : '';
+      const voiceId = PerxonaConfig.getVoiceId();
       if (voiceId) target.voiceId = voiceId;
 
       if (typeof presenter.initializeWithConnectKey !== 'function') {

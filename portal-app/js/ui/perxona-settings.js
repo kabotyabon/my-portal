@@ -3,7 +3,7 @@
 // =====================
 // キャラクターの見た目は 2D 立ち絵（assets/avatars）と 3D（Perxona カタログ）を1つの一覧で選ぶ。
 // 3D の選択肢は Perxona キーがあるときだけ出す。
-// 音声は表示と独立の層: なし / Gemini TTS（Gemini キーがあれば）/ Perxona（3D を選んでいるときだけ）。
+// 音声は見た目に紐づく: 3D を選べば Perxona 固有の声、2D を選べば Gemini TTS の声（どちらも「なし」可）。
 // 音声 select の value は "" / "gemini:<voice>" / "perxona:<voice_id>"。
 // select の value は "2d:<slug>" / "3d:<avatar_id>" で、2D/3D の別を値に持たせる。
 // Scene ID は静的（PerxonaConfig.DEFAULTS.sceneId。背景は舞台側の scene.json が担う）。
@@ -74,31 +74,30 @@ function _currentCharacterValue() {
 
 let _perxonaVoices = [];   // Connect API の音声カタログ（Perxona キーがあるときに取得）
 
-function _currentVoiceValue() {
-  const engine = VoiceConfig.getEngine();
-  if (engine === 'gemini') return `gemini:${VoiceConfig.getGeminiVoice()}`;
-  if (engine === 'perxona' && PerxonaConfig.getVoiceId()) return `perxona:${PerxonaConfig.getVoiceId()}`;
-  return '';
-}
-
-/** 音声の選択肢を作り直す。Perxona の声は 3D を選んでいるときだけ（2D では鳴らせないため） */
+/**
+ * 音声の選択肢を、選んでいる見た目に合わせて作り直す。
+ * 3D → なし＋Perxona の声 / 2D → なし＋Gemini の声（Gemini キーがあるとき）。初期値はその種別の保存値
+ */
 function _renderVoiceOptions() {
   const select = document.getElementById('voice-select');
   if (!select) return;
-  const keep = select.options.length > 1 ? select.value : _currentVoiceValue();
   const is3d = (document.getElementById('avatar-select')?.value || '').startsWith('3d:');
   let html = '<option value="">なし（無音）</option>';
-  if (getGeminiKey()) {
-    html += '<optgroup label="Gemini">' + GEMINI_TTS_VOICES.map(([name, desc]) =>
-      `<option value="gemini:${_escAttr(name)}">${_escAttr(name)}（${_escAttr(desc)}）</option>`).join('') + '</optgroup>';
-  }
-  if (is3d && _perxonaVoices.length) {
-    html += '<optgroup label="Perxona（3D）">' + _perxonaVoices.map(v =>
-      `<option value="perxona:${_escAttr(v.id)}">${_escAttr(v.name)}（${_escAttr(v.provider)}）</option>`).join('') + '</optgroup>';
+  let current = '';
+  if (is3d) {
+    html += _perxonaVoices.map(v =>
+      `<option value="perxona:${_escAttr(v.id)}">${_escAttr(v.name)}（${_escAttr(v.provider)}）</option>`).join('');
+    if (PerxonaConfig.getVoiceId()) current = `perxona:${PerxonaConfig.getVoiceId()}`;
+  } else if (getGeminiKey()) {
+    html += GEMINI_TTS_VOICES.map(([name, desc]) =>
+      `<option value="gemini:${_escAttr(name)}">${_escAttr(name)}（${_escAttr(desc)}）</option>`).join('');
+    if (VoiceConfig.getGeminiVoice()) current = `gemini:${VoiceConfig.getGeminiVoice()}`;
   }
   select.innerHTML = html;
-  select.value = keep;
-  if (select.value !== keep) select.value = '';   // 選べなくなった声（3D→2D で Perxona の声など）は「なし」へ
+  select.value = current;
+  if (select.value !== current) select.value = '';
+  const label = document.getElementById('voice-label');
+  if (label) label.textContent = is3d ? '音声（Perxona）' : (getGeminiKey() ? '音声（Gemini）' : '音声（Gemini キーを設定すると選べます）');
 }
 
 async function initCharacterSettings() {
@@ -133,7 +132,6 @@ async function initCharacterSettings() {
   select.value = _currentCharacterValue();
   if (!select.value && select.options.length) select.selectedIndex = 0;
   select.onchange = _renderVoiceOptions;
-  document.getElementById('voice-select').innerHTML = '';   // 保存済みの値から選び直させる
   _renderVoiceOptions();
 }
 
@@ -142,15 +140,9 @@ function switchCharacter() {
   const [kind, id] = [value.slice(0, 2), value.slice(3)];
   if (!id) return;
   const voice = document.getElementById('voice-select')?.value || '';
-  if (voice.startsWith('gemini:')) {
-    VoiceConfig.setEngine('gemini');
-    VoiceConfig.setGeminiVoice(voice.slice(7));
-  } else if (voice.startsWith('perxona:')) {
-    VoiceConfig.setEngine('perxona');
-    PerxonaConfig.setVoiceId(voice.slice(8));
-  } else {
-    VoiceConfig.setEngine('');
-  }
+  // 声は見た目の種別ごとに保存する（2D→3D→2D と切り替えても、それぞれの声を覚えている）
+  if (kind === '3d') PerxonaConfig.setVoiceId(voice.startsWith('perxona:') ? voice.slice(8) : '');
+  else VoiceConfig.setGeminiVoice(voice.startsWith('gemini:') ? voice.slice(7) : '');
   if (kind === '3d') {
     PerxonaConfig.setAvatarId(id);
     PerxonaConfig.setEnabled(true);
@@ -183,7 +175,7 @@ async function testVoice() {
   }
 
   // Perxona の声は 3D の準備ができているときだけ（保存済みの声で鳴る）
-  if (!PerxonaConfig.isEnabled() || VoiceConfig.getEngine() !== 'perxona') {
+  if (!PerxonaConfig.isEnabled() || PerxonaConfig.getVoiceId() !== voice.slice(8)) {
     _perxonaStatus('Perxona の声は、3D の見た目とこの声を選んで「切り替える」を押してから試してください', false);
     return;
   }
