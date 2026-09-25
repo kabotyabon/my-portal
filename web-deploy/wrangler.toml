@@ -1,0 +1,11 @@
+name = "my-portal-app"
+compatibility_date = "2026-09-25"
+
+# app.knowledgenote.work にカスタムドメインで紐付ける
+routes = [
+  { pattern = "app.knowledgenote.work", custom_domain = true }
+]
+
+# portal-app をそのまま静的配信する（ビルド工程なし、GitHub Pagesの代替）
+[assets]
+directory = "../portal-app"

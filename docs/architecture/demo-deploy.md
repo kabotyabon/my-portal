@@ -23,7 +23,19 @@
 
 ### 公開URL
 
-- 公開URLは `…/my-portal/portal-app/`。旧 `…/my-portal/` からは自動転送される（ホーム画面に追加済みでも開き直せば転送される）
+- **正式な公開URLは `https://app.knowledgenote.work/`（2026-09-25〜、Cloudflare Workers Static Assets配信）**
+- 旧URL `…/my-portal/portal-app/`（GitHub Pages）も並行して生きている（`.github/workflows/deploy-pages.yml`は現役のまま）。ミラー・避難先として残す
+- 2つの公開URLはブラウザのオリジンが別なので、**localStorage（アクセスキー・Geminiキー・下書き）は共有されない**。どちらでも初回は設定し直しが必要
+- TWA・PWAは今後 `app.knowledgenote.work` を正として使う
+
+### Cloudflare Workers Static Assets デプロイ（`web-deploy/`）
+
+`portal-app/` をビルド工程なしでそのままCloudflare Workers（Static Assets機能）配信する。GitHub Pagesと同じ「ビルドなしの静的配信」だが、独自ドメイン（`app.knowledgenote.work`）で提供できる。
+
+- 設定は `web-deploy/wrangler.toml`。`[assets].directory` が `../portal-app` を指すだけの薄い構成（`worker-proxy/`とは別プロジェクト）
+- デプロイは手動 `npx wrangler deploy`（`web-deploy/`内で実行）。GitHub Pagesのような push時自動デプロイのCI連携はまだ無い
+- 中間サーバー（`worker-proxy/`）の`ALLOWED_ORIGINS`に`https://app.knowledgenote.work`を追加済み。新しい配信元を増やす場合はここも忘れずに更新する
+- `wrangler pages`系コマンド（Cloudflare Pages）は使わず、Cloudflare公式が推奨する「Workers + Static Assets」方式を採用（2026-09時点でwranglerもPagesより Workers方式を案内する）
 
 ### キャッシュバスト運用（注意）
 
@@ -62,6 +74,13 @@ GitHubへの読み書きを中継する薄いプロキシを `worker-proxy/` に
 
 ## 変遷
 
+- **2026-09-25** — ポータル本体（`portal-app/`）をCloudflare Workers Static Assetsで`app.knowledgenote.work`へ
+  デプロイ（`web-deploy/`）。TWA化にあたり、GitHub Pages（`kabotyabon.github.io`）ではなく取得済みの独自ドメインを
+  使いたいという要望から。当初`wrangler pages project create`で試みたところ、リポジトリルート全体を
+  アセット化しようとして`package.json`等を巻き込む挙動になったため中断・リポジトリを復元し、`web-deploy/`という
+  独立ディレクトリから`wrangler deploy`（Cloudflare公式が現在案内するWorkers + Static Assets方式。Pages専用コマンドは
+  不採用）で`portal-app/`だけを配信する構成に切り替えた。中間サーバーの`ALLOWED_ORIGINS`に新オリジンを追加し
+  疎通確認（対話・日記・メモの実データ取得）まで完了。GitHub Pagesは並行稼働のまま残す
 - **2026-09-25** — 中間サーバー（`worker-proxy/`）をCloudflareへデプロイし、`api.knowledgenote.work`への
   カスタムドメイン紐付けと疎通確認（`vault/config.json`取得）まで完了。Volta経由でNode.js/npmを導入し、
   wranglerの依存（esbuild/sharp/workerd）のinstall scriptsを承認して環境構築。カスタムドメインの

@@ -11,9 +11,9 @@ routes = [
 [vars]
 GITHUB_REPO = "kabotyabon/my-portal-vault"
 GITHUB_BRANCH = "main"
-# 公開アプリ（GitHub Pages）と、将来のNext.js版のドメインをカンマ区切りで並べる。
+# 公開アプリ（GitHub Pages・Cloudflare app.knowledgenote.work）と、将来のNext.js版のドメインをカンマ区切りで並べる。
 # ここに無い Origin からのリクエストは CORS で弾かれる（X-Portal-Key を知っていても）。
-ALLOWED_ORIGINS = "https://kabotyabon.github.io,https://knowledgenote.work"
+ALLOWED_ORIGINS = "https://kabotyabon.github.io,https://app.knowledgenote.work,https://knowledgenote.work"
 
 # 以下は Secret（このファイルには書かない。`wrangler secret put <NAME>` で個別に登録する）:
 #   GITHUB_PAT     … my-portal-vault への Contents:write を持つ PAT
