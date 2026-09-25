@@ -37,6 +37,17 @@
 - ペルソナが公開リポジトリ側にあるのは、Pages からの相対 fetch で読む必要があるため。
   公開面に置く以上、オリジナル作品（または権利処理済み）のパックだけを置く
 
+### アクセスキー未設定時は人格・会話UIを一切出さない（2026-09-25）
+
+ポータル本体が独自ドメイン（`app.knowledgenote.work`）で公開URLになったことに伴い、**未認証の訪問者に
+人格（card.json/scene.json）を見せない**よう変更した。デモモード（`?demo`）はこの制限を受けない。
+
+- `js/core/app.js`: card.json/scene.json の読み込み自体を `window.DEMO_MODE || !!getToken()` の条件下でのみ行う
+- `js/ui/avatar-scene.js` の `mount()`: 条件を満たさなければ `.vn-stage` に `is-locked` クラスを付けて即 return（立ち絵・3D 初期化を一切行わない）
+- `css/ai-chat.css`: `.vn-stage.is-locked` 配下で背景・立ち絵・3D層・会話ログ・台詞・返信候補・添付・入力欄など
+  会話UI一式を `display: none` にし、代わりに「設定からアクセスキーを入力してください」の案内文（`#vn-locked-msg`）だけを出す
+- アクセスキーを保存すると `location.reload()` で全体が再初期化されるため、追加のイベント配線は不要
+
 ### 3D アバター・音声（Perxona Connect Kit）
 
 2D 立ち絵＋CSS 疑似表情に加え、[Perxona Connect Kit](https://connect.perxona.ai/)（XRSPACE、Apache-2.0）による
@@ -46,6 +57,8 @@
 - 該当ファイル: `js/core/perxona-config.js`（Key・Avatar/Scene/Voice ID を localStorage に保持）・
   `js/presenter/perxona-stage.js`（`<sv-presenter>` の初期化・発話・中断）・
   `js/ui/perxona-settings.js`（設定画面）・`css/perxona.css`・`avatars.html`（アバター一覧・ID 確認用）
+- Avatar・Voice は Connect API のカタログ（`/assets/avatars`・`/voices?language=ja`）を取得してプルダウンで選ぶ
+  （2026-09-25〜。Avatar は以前 ID 手入力だった）。Scene ID はカタログ取得APIが未確認のためテキスト入力のまま
 - 有効化条件は `PerxonaConfig.isEnabled()`: Publishable Key が設定済みかつ設定画面のスイッチが ON
   （Key があれば既定 ON）。デモモード（`?demo`）は常に 2D 固定
 - `avatar-scene.js` が `mountPerxona()` / `unmountPerxona()` で 2D と 3D の表示を切り替える。
@@ -88,6 +101,8 @@
 
 ## 変遷
 
+- **2026-09-25** アクセスキー未設定時は人格・会話UIを一切表示しないよう変更（app.knowledgenote.work公開に伴う）。
+  あわせてPerxonaのAvatar IDをConnect APIカタログ（`/assets/avatars`）取得のプルダウンに変更（Voiceと同じ方式）
 - **2026-09-22** Perxona Connect Kit による3Dアバター・音声を統合。設定画面のグローバルトグルとして実装し、
   当初計画（`scene.json` に `renderer` / `perxona` ブロックを追加するパック仕様v2）は採らなかった:
   グローバル1系統で足り、パックごとの3Dアセット管理は現時点で需要がない。

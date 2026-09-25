@@ -216,6 +216,9 @@ loadAllPartials().then(async () => {
 
   // 使用中のペルソナ（PERSONA_DIR）の card.json をロードする。
   //
+  // アクセスキー未設定（デモモードを除く）では読み込まない。公開URLになった以上、
+  // 未認証の訪問者に人格そのもの（card.json/scene.json）を取得・表示させない。
+  //
   // 以前は persona.md の frontmatter を自前でパースしていたが、その実装には穴があった:
   //   - 正規表現が `\n` 決め打ちで、CRLF のファイルでは frontmatter が丸ごと本文に落ちる
   //   - `line.split(':')` なので、値の中にコロンがあると壊れる（例: greeting に時刻）
@@ -223,35 +226,38 @@ loadAllPartials().then(async () => {
   //
   // ここに置くのは「作者が書く人格」だけ。対話で変化するユーザー像や関係の記憶は
   // vault 側に置く（成長するのはそちらで、card.json ではない）。
-  try {
-    const res = await fetch(`${PERSONA_DIR}card.json`);
-    if (res.ok) {
-      const card = await res.json();
-      window.AI_PERSONA = {
-        name: card.name,
-        userCallName: card.userCallName,
-        // ペルソナの言語（persona-pack-spec §2 の予約フィールド）。
-        // v1 のランタイム注入文（表情タグ案内等）は日本語のみで、この値はまだ参照しない。
-        language: card.language || 'ja',
-        avatarUrl: card.avatarUrl,   // 任意。省略時は PERSONA_DIR の avatar.png
-        greeting: card.greeting,     // 起動時の挨拶（口調は人格に属する）
-        // この人格が使ってはいけない語。返答を機械的に照合するために持つ。
-        // 本文に「使わない」と書くだけでは守られないため、宣言を機械可読にしてある。
-        avoidWords: Array.isArray(card.avoidWords) ? card.avoidWords : [],
-        intro:       card.intro || '',
-        sections:    Array.isArray(card.sections)    ? card.sections    : [],
-        // 会話履歴の後ろに置く指示。前に置くより強く効くため、破られやすい規律の
-        // 移動先として用意してある（現状は未使用）。
-        postHistory: Array.isArray(card.postHistory) ? card.postHistory : []
-      };
+  const canShowPersona = window.DEMO_MODE || !!getToken();
+  if (canShowPersona) {
+    try {
+      const res = await fetch(`${PERSONA_DIR}card.json`);
+      if (res.ok) {
+        const card = await res.json();
+        window.AI_PERSONA = {
+          name: card.name,
+          userCallName: card.userCallName,
+          // ペルソナの言語（persona-pack-spec §2 の予約フィールド）。
+          // v1 のランタイム注入文（表情タグ案内等）は日本語のみで、この値はまだ参照しない。
+          language: card.language || 'ja',
+          avatarUrl: card.avatarUrl,   // 任意。省略時は PERSONA_DIR の avatar.png
+          greeting: card.greeting,     // 起動時の挨拶（口調は人格に属する）
+          // この人格が使ってはいけない語。返答を機械的に照合するために持つ。
+          // 本文に「使わない」と書くだけでは守られないため、宣言を機械可読にしてある。
+          avoidWords: Array.isArray(card.avoidWords) ? card.avoidWords : [],
+          intro:       card.intro || '',
+          sections:    Array.isArray(card.sections)    ? card.sections    : [],
+          // 会話履歴の後ろに置く指示。前に置くより強く効くため、破られやすい規律の
+          // 移動先として用意してある（現状は未使用）。
+          postHistory: Array.isArray(card.postHistory) ? card.postHistory : []
+        };
+      }
+    } catch (e) {
+      console.warn('card.json の読み込みに失敗しました:', e);
     }
-  } catch (e) {
-    console.warn('card.json の読み込みに失敗しました:', e);
-  }
-  // scene.json（表情差分・背景の定義）をロードする
-  // persona.md の avatarUrl をフォールバック画像に使うため、必ず persona 読み込みの後に行う。
-  if (typeof AvatarScene !== 'undefined') {
-    await AvatarScene.load();
+    // scene.json（表情差分・背景の定義）をロードする
+    // persona.md の avatarUrl をフォールバック画像に使うため、必ず persona 読み込みの後に行う。
+    if (typeof AvatarScene !== 'undefined') {
+      await AvatarScene.load();
+    }
   }
 
   window.dispatchEvent(new Event('persona-loaded'));

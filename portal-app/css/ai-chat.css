@@ -24,6 +24,32 @@
 .vn-glow-layer    { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
 .vn-portrait-layer{ position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 
+/* アクセスキー未設定時: キャラクター・会話UIを隠し、案内文だけ出す。
+   is-locked が付いていない（通常時）は常に非表示。 */
+.vn-locked-msg {
+  display: none;
+  position: absolute; inset: 0; z-index: 15;
+  align-items: center; justify-content: center;
+  text-align: center; padding: 24px;
+  color: rgba(255,255,255,.72);
+  font-size: 13px;
+}
+.vn-stage.is-locked .vn-locked-msg { display: flex; }
+.vn-stage.is-locked .vn-bg-layer,
+.vn-stage.is-locked .vn-glow-layer,
+.vn-stage.is-locked .vn-portrait-layer,
+.vn-stage.is-locked .vn-3d-layer,
+.vn-stage.is-locked .vn-scrim,
+.vn-stage.is-locked .chat-session-bar,
+.vn-stage.is-locked .vn-user-log,
+.vn-stage.is-locked .vn-dialogue-box,
+.vn-stage.is-locked .vn-replies,
+.vn-stage.is-locked .file-chips,
+.vn-stage.is-locked .chat-options,
+.vn-stage.is-locked .chat-composer {
+  display: none;
+}
+
 .vn-portrait-img {
   position: absolute;
   inset: 0;

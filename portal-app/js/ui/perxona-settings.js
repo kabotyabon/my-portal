@@ -31,19 +31,37 @@ async function loadPerxonaVoices() {
   }
 }
 
+/** アバター一覧を Connect API（/assets/avatars）から取得して select に反映する */
+async function loadPerxonaAvatars() {
+  const select = document.getElementById('perxona-avatar-select');
+  if (!select || !PerxonaConfig.getKey()) return;
+  const current = PerxonaConfig.getAvatarId();
+  try {
+    const items = await PerxonaConfig.fetchAll('/assets/avatars');
+    select.innerHTML = items.map(a =>
+      `<option value="${_escAttr(a.avatar_id)}">${_escAttr(a.name)}</option>`).join('');
+    if (current && !items.some(a => a.avatar_id === current)) {
+      select.insertAdjacentHTML('beforeend', `<option value="${_escAttr(current)}">${_escAttr(current)}（保存済み）</option>`);
+    }
+    select.value = current;
+  } catch (e) {
+    _perxonaStatus(`アバター一覧を取得できません（${e.message}）。Key と Allowed Domains を確認してください`, false);
+  }
+}
+
 function initPerxonaSettings() {
   const key = document.getElementById('perxona-key-input');
   if (!key) return;
   key.value = PerxonaConfig.getKey();
-  document.getElementById('perxona-avatar-input').value = PerxonaConfig.getAvatarId();
   document.getElementById('perxona-scene-input').value = PerxonaConfig.getSceneId();
   document.getElementById('perxona-enabled').checked = localStorage.getItem(PERXONA_KEYS.ENABLED) !== '0';
   loadPerxonaVoices();
+  loadPerxonaAvatars();
 }
 
 function savePerxonaSettings() {
   PerxonaConfig.setKey(document.getElementById('perxona-key-input').value);
-  PerxonaConfig.setAvatarId(document.getElementById('perxona-avatar-input').value);
+  PerxonaConfig.setAvatarId(document.getElementById('perxona-avatar-select').value);
   PerxonaConfig.setSceneId(document.getElementById('perxona-scene-input').value);
   PerxonaConfig.setVoiceId(document.getElementById('perxona-voice-select').value);
   PerxonaConfig.setEnabled(document.getElementById('perxona-enabled').checked);
@@ -57,6 +75,7 @@ function savePerxonaSettings() {
   }
   if (typeof AvatarScene !== 'undefined') AvatarScene.remountPerxona();
   loadPerxonaVoices();
+  loadPerxonaAvatars();
 }
 
 /**

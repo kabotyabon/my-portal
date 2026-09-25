@@ -184,6 +184,17 @@ window.AvatarScene = {
   mount() {
     const stage = document.querySelector('.vn-stage');
     if (!stage) return;
+
+    // アクセスキー未設定（デモモードを除く）では、キャラクター・会話UIを一切出さない。
+    // 公開URLになった以上、認証前の訪問者に人格そのものを見せない（persona.json 等の
+    // 取得もここで止まるため、未認証の状態では通信も発生しない）。
+    if (!window.DEMO_MODE && typeof getToken === 'function' && !getToken()) {
+      stage.classList.add('is-locked');
+      this._mounted = true;
+      return;
+    }
+    stage.classList.remove('is-locked');
+
     this._mounted = true;
     // 3D が有効なら、準備が終わる（または失敗して 2D へ戻る）まで立ち絵を出さない。
     // 先に 2D を描くと、初回リロードで旧来の立ち絵が一瞬映ってから 3D に差し替わる。
