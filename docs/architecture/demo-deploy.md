@@ -35,6 +35,9 @@
 
 ブラウザの「ホーム画面に追加」でアプリとしてインストールできる（`portal-app/manifest.json`）。
 
+- アイコン（192/512/512 maskable）を`assets/icons/`に用意済み（2026-09-25）。生成スクリプトは`tools/generate-icons.ps1`（.NET System.Drawingで直接描画。三日月＋夜のグラデーション、Ambient Companionのテーマカラー準拠）
+- アイコン追加により、Android Chromeでの正式な「インストール」導線（`beforeinstallprompt`）が機能する条件が揃った
+
 ### 中間サーバー（Cloudflare Workers プロキシ）— デプロイ済み・アプリ側は未接続
 
 Web/モバイルの分離（モバイルはTWA→React Native、Web版はNext.js化を検討中）に伴い、
