@@ -2,56 +2,50 @@
 
 ## いまの仕様
 
-### 二層構造 — 人格の定義と、ユーザーの記憶
+### 三層モデル — 人格・表示・音声（2026-09-25〜）
 
-- **人格の定義**はペルソナパック（アプリ側・静的）。人間が書き、対話では変化しない
-- **ユーザーの記憶**は `vault/persona-state/`（データ側）。AI／ユーザーが書き、使うほど変わる
-- 記憶はキャラクターではなく**ユーザーに紐づく**。ペルソナを差し替えても記憶は残る
+キャラクターを3つの層に分け、それぞれ独立に選べるようにする。**置き場所は「個人に属するか」で決める。**
 
-### ペルソナパック
+| 層 | 中身 | 置き場所 | 取得経路 |
+|---|---|---|---|
+| **人格** | `card.json`（口調・規律・プロンプト）＋ 記憶（`persona-state/`） | vault（非公開） | 中間サーバー経由（アクセスキー必須） |
+| **表示** | 2D: 立ち絵・表情差分・`scene.json` ／ 3D: Perxona アバター | アプリ（公開） | 相対 fetch ／ Perxona Connect API |
+| **音声** | Perxona Voice（将来 Gemini TTS） | アプリ（公開）＋キー | 各キーは個人の秘匿値として localStorage |
 
-人格・表情・舞台演出を1ディレクトリに封じたポータブルな配布単位。仕様の正は
-`my-portal/docs/persona-pack-spec.md`（§1 構成 / §2 card.json / §3 scene.json / §3.5 demo.json /
-§4 画像要件 / §5 タグプロトコル / §7 配布ルール）。要点のみ:
+- **人格は vault につき1つ。** 選ぶものではなく、その vault の持ち主の相棒（将来の多人数利用では各自の vault に1つずつ入る）。
+  見た目と声は誰でも使える共通カタログから選ぶ
+- `card.json` の `defaultAvatar` が既定の見た目を指す。設定画面で上書きできる（どの見た目とも組み合わせられる）
+- **ユーザーの記憶**は `vault/persona-state/`。キャラクターではなくユーザーに紐づくので、人格を差し替えても残る
+- Perxona・Gemini のキーはどちらも秘匿扱い（ブラウザの localStorage のみ、リポジトリ・vault には置かない）
 
-- 構成: `card.json`（人格定義・必須）/ `scene.json`（表情・背景・演出・必須）/ `avatar.png`（必須）/
-  `image-prompts.md`（画像の生成用プロンプト。アプリは読まない）/ `demo.json`（デモ台本・任意）/ `expressions/`
-- `card.json` は `intro` ＋ `sections` 配列（見出し＋行）でシステムプロンプトを組み立てる。
-  `{呼称}` / `{userCallName}` を `userCallName` で置換。`postHistory` は予約（未使用）
-- 表情は標準8種: neutral / happy / excited / gentle / thinking / worried / sad / surprised。
-  画像が無い表情は `avatar.png` ＋ CSS 疑似表情で代用（画像ゼロのパックも有効）
-- パック内のパス参照はすべてパック相対。絶対パスを書かないことがポータビリティの根拠
-
-### 複数ペルソナの配置と切り替え
+### 配置
 
 ```
-portal-app/assets/personas/
-  index.json          ← 一覧（[{slug, name}]）。静的サイトはディレクトリ一覧を取れないため手で管理
-  kohaho/             ← こはる（既定）
-  komaru/             ← こまる（デモモードの固定の顔でもある）
+my-portal-vault/vault/persona/      ← 人格（非公開・1つだけ）
+  card.json                         ← こはる（defaultAvatar: kohaho）
+
+my-portal/portal-app/assets/avatars/ ← 表示（公開）
+  index.json                        ← 一覧 [{slug, name}]
+  <slug>/scene.json / avatar.png / expressions/ / image-prompts.md
 ```
 
-- 選択中の slug は localStorage（`active_persona_slug`）。未設定なら `kohaho`
-- 読み込みパスは `js/core/config.js` の `PERSONA_DIR`（起動時に1回だけ決まる）に集約。
-  設定画面「ペルソナ」で切り替えると `location.reload()` で読み直す
-- デモモード（`?demo`）は選択に関わらず常に `komaru`。オーナーが今どのペルソナを使っているかを
-  公開デモで漏らさないため
-- パックを追加するときは `personas/<slug>/` を置いて `index.json` に1行足すだけ
-- ペルソナが公開リポジトリ側にあるのは、相対 fetch で読む必要があるため。
-  公開面に置く以上、オリジナル作品（または権利処理済み）のパックだけを置く
-- 人格（このパック）・表示（2D立ち絵 / Perxona 3D）・音声（Perxona Voice、将来は Gemini TTS も）の
-  3層を独立に選べるようにするのが目標。現状、表示と音声は Perxona 設定側でグローバルに持つ
+- 見た目の選択は localStorage の `active_avatar_slug`（未設定なら人格の `defaultAvatar`）。解決は `js/core/config.js` の `getAvatarDir()` に集約
+- 設定画面「キャラクターの見た目（2D）」で選び、`location.reload()` で読み直す
+- 人格を替えたいときは `vault/persona/card.json` 自体を書き換える。見た目を足すときは `assets/avatars/<slug>/` を置いて `index.json` に1行
+- 見た目は公開面に出るので、オリジナル作品（または権利処理済み）の素材だけを置く
+- 形式の詳細は `my-portal/docs/persona-pack-spec.md`（§2 card.json / §3 scene.json / §4 画像要件 / §5 タグプロトコル）:
+  - `card.json` は `intro` ＋ `sections` 配列（見出し＋行）でシステムプロンプトを組み立てる。
+    `{呼称}` / `{userCallName}` を `userCallName` で置換。`postHistory` は予約（未使用）
+  - 表情は標準8種: neutral / happy / excited / gentle / thinking / worried / sad / surprised。
+    画像が無い表情は `avatar.png` ＋ CSS 疑似表情で代用（画像ゼロの見た目も有効）
+  - 見た目ディレクトリ内のパス参照はすべて相対
 
-### アクセスキー未設定時は人格・会話UIを一切出さない（2026-09-25）
+### アクセスキー未設定時は人格・会話UIを一切出さない
 
-ポータル本体が独自ドメイン（`app.knowledgenote.work`）で公開URLになったことに伴い、**未認証の訪問者に
-人格（card.json/scene.json）を見せない**よう変更した。デモモード（`?demo`）はこの制限を受けない。
-
-- `js/core/app.js`: card.json/scene.json の読み込み自体を `window.DEMO_MODE || !!getToken()` の条件下でのみ行う
-- `js/ui/avatar-scene.js` の `mount()`: 条件を満たさなければ `.vn-stage` に `is-locked` クラスを付けて即 return（立ち絵・3D 初期化を一切行わない）
-- `css/ai-chat.css`: `.vn-stage.is-locked` 配下で背景・立ち絵・3D層・会話ログ・台詞・返信候補・添付・入力欄など
-  会話UI一式を `display: none` にし、代わりに「設定からアクセスキーを入力してください」の案内文（`#vn-locked-msg`）だけを出す
-- アクセスキーを保存すると `location.reload()` で全体が再初期化されるため、追加のイベント配線は不要
+- `js/core/app.js`: `getToken()` が無ければ card.json（vault）も scene.json も読まない。人格は vault にあるので、そもそも取得できない
+- `js/ui/avatar-scene.js` の `mount()`: `.vn-stage` に `is-locked` を付けて即 return（立ち絵・3D 初期化をしない）
+- `css/ai-chat.css`: `.vn-stage.is-locked` 配下の会話UI一式を隠し、「設定からアクセスキーを入力してください」（`#vn-locked-msg`）だけを出す
+- アクセスキーを保存すると `location.reload()` で全体が再初期化される
 
 ### 3D アバター・音声（Perxona Connect Kit）
 
@@ -65,7 +59,7 @@ portal-app/assets/personas/
 - Avatar・Voice は Connect API のカタログ（`/assets/avatars`・`/voices?language=ja`）を取得してプルダウンで選ぶ
   （2026-09-25〜。Avatar は以前 ID 手入力だった）。Scene ID はカタログ取得APIが未確認のためテキスト入力のまま
 - 有効化条件は `PerxonaConfig.isEnabled()`: Publishable Key が設定済みかつ設定画面のスイッチが ON
-  （Key があれば既定 ON）。デモモード（`?demo`）は常に 2D 固定
+  （Key があれば既定 ON）
 - `avatar-scene.js` が `mountPerxona()` / `unmountPerxona()` で 2D と 3D の表示を切り替える。
   初期化失敗（`CONNECT_KEY_REJECTED` / SDK 読み込み失敗など）は `onFail` 経由で 2D 立ち絵へ自動フォールバックする
 - Key は Publishable Key のみを使う（Secret Key は使わない）。ブラウザにしか置けないため、
@@ -106,6 +100,11 @@ portal-app/assets/personas/
 
 ## 変遷
 
+- **2026-09-25** 人格と表示を分離。`card.json` を公開側から `vault/persona/card.json` へ移し中間サーバー経由で読む。
+  人格は vault につき1つとし、設定画面での人格選択は廃止（こまるの人格定義は外した。見た目は残る）。
+  公開側は見た目専用の `assets/avatars/<slug>/` に改名し、`card.json` の `defaultAvatar` と設定画面の上書きで組み合わせる。
+  画像は人格と切り離された共通素材なので公開のままでよい、という整理。同時にデモモード（`?demo`・`demo.json`）を
+  機能過大として削除。こまるの背景も `auto` に揃えた
 - **2026-09-25** 複数ペルソナを設定画面から選べるようにした。`assets/persona/`（使用中）＋`assets/_名前/`（控え）を
   `git mv` で入れ替える方式をやめ、全パックを `assets/personas/<slug>/` に並べて `index.json` で一覧化。
   こまるをデモ専用から通常選択肢にも昇格。人格・表示・音声を独立に選ぶ3層モデルへの第一歩
@@ -165,5 +164,4 @@ portal-app/assets/personas/
 - **上限到達で古い行が落ちたときの妥当性を人が確認する手段が無い**（日記に残るので追えるが通知は無い）
 - **persona-state/ はアプリの archive 画面から閲覧・編集できない**（`archive.js` が diary / knowledge
   しか一覧しない）。手で GitHub を開くのが現状の運用
-- **画像は公開リポジトリ側のまま**。vault へ戻すには Worker プロキシが要る
 - **ランタイム注入文が日本語のみ**。card.json の `language` は予約済みだが `"ja"` のみ有効（spec v2 スコープ）

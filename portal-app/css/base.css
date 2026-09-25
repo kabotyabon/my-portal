@@ -358,17 +358,3 @@ header h1 {
     transform: none;
   }
 }
-
-/* ===== デモモードバナー（?demo / js/domains/demo-script.js） ===== */
-.demo-banner {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 300;                /* セッションドロップダウン(z200)より上 */
-  padding: 6px 12px;
-  text-align: center;
-  font-size: 12px;
-  color: #fff;
-  background: rgba(120, 60, 140, .92);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, .35);
-}
-.demo-banner a { color: #ffd9a0; }

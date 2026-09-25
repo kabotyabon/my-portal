@@ -48,12 +48,11 @@ function getGeminiKey() { return _readKey(GEMINI_KEY); }
 window.getToken     = getToken;
 window.getGeminiKey = getGeminiKey;
 
-// ---- AI Persona (PERSONA_DIR の card.json から読む) ----
-// window.AI_PERSONA = { name, userCallName, avatarUrl, greeting, avoidWords, intro, sections, postHistory }
-// は app.js の初期化時にセット済み。
-// avatarUrl は任意。省略時はペルソナディレクトリの avatar.png を使う（セットを持ち運べるようにするため）
-function getAiName()   { return (window.AI_PERSONA && window.AI_PERSONA.name)      || 'AI'; }
-function getAiAvatar() { return (window.AI_PERSONA && window.AI_PERSONA.avatarUrl)  || `${PERSONA_DIR}avatar.png`; }
+// ---- AI Persona (vault/persona/card.json から読む) ----
+// window.AI_PERSONA = { name, userCallName, defaultAvatar, greeting, avoidWords, intro, sections, postHistory }
+// は app.js の初期化時にセット済み。アイコン画像は見た目（assets/avatars/<slug>/）側の avatar.png
+function getAiName()   { return (window.AI_PERSONA && window.AI_PERSONA.name) || 'AI'; }
+function getAiAvatar() { return `${getAvatarDir()}avatar.png`; }
 
 /**
  * card.json のセクションを、プロンプトに載せる1本のテキストへ組み立てる。
@@ -83,26 +82,28 @@ function initSettingsTab() {
   if (statusEl) statusEl.textContent = '';
 }
 
-// ---- ペルソナ選択 ----
+// ---- 見た目の選択 ----
+// 人格は vault につき1つなので選ばない。選べるのは見た目（公開の一覧）だけ。
 async function initPersonaSelect() {
-  const select = document.getElementById('persona-select');
-  if (!select || typeof fetchPersonaList !== 'function') return;
+  const avatarSel = document.getElementById('avatar-select');
+  if (!avatarSel) return;
   try {
-    const list = await fetchPersonaList();
-    select.innerHTML = list.map(p => `<option value="${escapeHtml(p.slug)}">${escapeHtml(p.name)}</option>`).join('');
-    select.value = getActivePersonaSlug();
+    const list = await fetchAvatarList();
+    avatarSel.innerHTML = '<option value="">人格の既定に合わせる</option>'
+      + list.map(p => `<option value="${escapeHtml(p.slug)}">${escapeHtml(p.name)}</option>`).join('');
+    avatarSel.value = getAvatarOverride();
   } catch (e) {
-    console.warn('ペルソナ一覧の取得に失敗しました:', e);
+    console.warn('見た目一覧の取得に失敗しました:', e);
   }
 }
 
-function switchPersona() {
-  const select = document.getElementById('persona-select');
-  if (!select || !select.value) return;
-  setActivePersonaSlug(select.value);
+function switchAvatar() {
+  const avatarSel = document.getElementById('avatar-select');
+  if (!avatarSel) return;
+  setAvatarOverride(avatarSel.value);
   location.reload();
 }
-window.switchPersona = switchPersona;
+window.switchAvatar = switchAvatar;
 
 // ---- 返信候補から拾ったフィードバック ----
 function renderReplyFeedbackTally() {

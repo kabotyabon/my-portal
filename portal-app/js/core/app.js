@@ -214,10 +214,9 @@ loadAllPartials().then(async () => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); sendChat(); }
   });
 
-  // 使用中のペルソナ（PERSONA_DIR）の card.json をロードする。
+  // この vault の人格（vault/persona/card.json）を中間サーバー経由でロードする。
   //
-  // アクセスキー未設定（デモモードを除く）では読み込まない。公開URLになった以上、
-  // 未認証の訪問者に人格そのもの（card.json/scene.json）を取得・表示させない。
+  // アクセスキー未設定では人格も見た目も読み込まない（未認証の訪問者には何も出さない）。
   //
   // 以前は persona.md の frontmatter を自前でパースしていたが、その実装には穴があった:
   //   - 正規表現が `\n` 決め打ちで、CRLF のファイルでは frontmatter が丸ごと本文に落ちる
@@ -226,19 +225,17 @@ loadAllPartials().then(async () => {
   //
   // ここに置くのは「作者が書く人格」だけ。対話で変化するユーザー像や関係の記憶は
   // vault 側に置く（成長するのはそちらで、card.json ではない）。
-  const canShowPersona = window.DEMO_MODE || !!getToken();
-  if (canShowPersona) {
+  if (getToken()) {
     try {
-      const res = await fetch(`${PERSONA_DIR}card.json`);
-      if (res.ok) {
-        const card = await res.json();
+      const card = await fetchPersonaCard();
+      if (card) {
         window.AI_PERSONA = {
           name: card.name,
           userCallName: card.userCallName,
           // ペルソナの言語（persona-pack-spec §2 の予約フィールド）。
           // v1 のランタイム注入文（表情タグ案内等）は日本語のみで、この値はまだ参照しない。
           language: card.language || 'ja',
-          avatarUrl: card.avatarUrl,   // 任意。省略時は PERSONA_DIR の avatar.png
+          defaultAvatar: card.defaultAvatar,   // 既定の見た目（assets/avatars/<slug>）。設定で上書きできる
           greeting: card.greeting,     // 起動時の挨拶（口調は人格に属する）
           // この人格が使ってはいけない語。返答を機械的に照合するために持つ。
           // 本文に「使わない」と書くだけでは守られないため、宣言を機械可読にしてある。
@@ -254,7 +251,7 @@ loadAllPartials().then(async () => {
       console.warn('card.json の読み込みに失敗しました:', e);
     }
     // scene.json（表情差分・背景の定義）をロードする
-    // persona.md の avatarUrl をフォールバック画像に使うため、必ず persona 読み込みの後に行う。
+    // 見た目の既定は card.json の defaultAvatar で決まるため、必ず人格の読み込みの後に行う。
     if (typeof AvatarScene !== 'undefined') {
       await AvatarScene.load();
     }

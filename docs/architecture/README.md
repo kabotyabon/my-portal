@@ -10,8 +10,8 @@
 ```mermaid
 graph LR
   U["ユーザー<br>(ブラウザ / PWA)"] --> P["ポータル<br>GitHub Pages 静的アプリ<br>(my-portal / public)"]
-  P -- "相対 fetch" --> PA["assets/personas/&lt;slug&gt;/<br>ペルソナパック（複数）"]
-  P -- "Contents API + PAT" --> V[("my-portal-vault (private)<br>diary / task / conversations /<br>persona-state / knowledge / docs")]
+  P -- "相対 fetch" --> PA["assets/avatars/&lt;slug&gt;/<br>見た目（立ち絵・scene.json）"]
+  P -- "Contents API + PAT" --> V[("my-portal-vault (private)<br>diary / task / conversations /<br>persona(人格) / persona-state / knowledge")]
   P -- "Function Calling" --> G["Gemini API"]
 ```
 
@@ -39,11 +39,11 @@ graph TD
 
 | ページ | 扱う範囲 |
 |---|---|
-| [persona.md](persona.md) | ペルソナパック（card/scene/画像）・切替規約・記憶（persona-state）・「覚えて」 |
+| [persona.md](persona.md) | 人格・表示・音声の3層モデル（人格=vault / 見た目=公開）・3D（Perxona）・記憶（persona-state）・「覚えて」 |
 | [conversation.md](conversation.md) | 対話UI（VN方式）・エージェントループ・プロンプト規律・会話ログ・フィードバックループ・定期改善の手順 |
 | [storage.md](storage.md) | GitHub Contents API・2リポジトリ境界・PAT・競合制御・追記/上書きガード |
 | [diary-tasks.md](diary-tasks.md) | 日記のファイル規約・チェックリスト・タスク・メモ・振り返り・月次まとめ |
-| [demo-deploy.md](demo-deploy.md) | デモモード（?demo）・Pagesデプロイ・キャッシュバスト運用 |
+| [demo-deploy.md](demo-deploy.md) | デプロイ（Cloudflare / Pages）・中間サーバー・TWA・キャッシュバスト運用 |
 | [decisions.md](decisions.md) | 決定の時系列1行ログ（このドキュメント群への反映先つき） |
 
 ## このドキュメントの運用ルール

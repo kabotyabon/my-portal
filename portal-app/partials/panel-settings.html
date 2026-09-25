@@ -21,14 +21,14 @@
     <div id="modal-status" class="modal-status"></div>
   </div>
 
-  <!-- ペルソナ選択（人格。表示は2D/Perxona切替、音声はPerxonaのVoiceで別途選ぶ） -->
+  <!-- 見た目（2D立ち絵・公開素材）。人格は vault につき1つなので選ばない。3D表示と音声は下の Perxona 欄 -->
   <div class="modal-section" style="margin-bottom:20px;">
-    <div class="modal-label">ペルソナ</div>
+    <div class="modal-label">キャラクターの見た目（2D）</div>
     <div class="token-row">
-      <select id="persona-select" style="flex:1;"></select>
-      <button class="btn-primary" onclick="switchPersona()">切り替える</button>
+      <select id="avatar-select" style="flex:1;"></select>
+      <button class="btn-primary" onclick="switchAvatar()">切り替える</button>
     </div>
-    <p class="modal-note">切り替えるとページが再読み込みされます。デモ画面（?demo）は常に「こまる」で固定です</p>
+    <p class="modal-note">切り替えるとページが再読み込みされます</p>
   </div>
 
   <!-- Gemini API Key -->
@@ -92,5 +92,5 @@
 
 </div>
 
-<script src="js/ui/settings.js?v=20260925c"></script>
+<script src="js/ui/settings.js?v=20260925e"></script>
 <script src="js/ui/perxona-settings.js?v=20260925"></script>

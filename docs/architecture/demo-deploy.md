@@ -1,17 +1,6 @@
-# デモとデプロイ
+# デプロイ
 
 ## いまの仕様
-
-### デモモード（?demo）
-
-公開URLに `?demo` を付けて開くと、PAT・APIキーなしでアバターとの対話を体験できる。
-
-- **「体験は本物、LLMだけスタブ」が設計方針。** Gemini の呼び出しだけを台本（`demo.json`）に差し替え、表情・背景・候補タグの解析、ページ送り、立ち絵の描画は本番と同じパイプラインをそのまま通す（`portal-app/js/domains/demo-script.js`）
-- ルーティングは「返信候補ボタンの文言 → ノードid」の**完全一致のみ**。自由入力には fallback を返す。賢くしない（賢い返事は本番の仕事）
-- **データはどこにも保存されない。** 画面上部にデモバナーを常時表示し、本セットアップへの導線を置く
-- 案内役は「こまる」（`portal-app/assets/personas/komaru/`）に固定。設定画面で選んでいるペルソナとは独立
-- 台本の口調は人格に属するため、`demo.json` はコードではなくペルソナパックが持つ（仕様は `docs/persona-pack-spec.md` §3.5）。パックに無い・壊れているときはアプリ内蔵の汎用台本に落ちる
-- 即答だと「考えています…」が点滅して見えるため、返答には 700ms の擬似的な間を置く
 
 ### GitHub Pages デプロイ
 
@@ -80,6 +69,8 @@ GitHubへの読み書きを中継する薄いプロキシを `worker-proxy/` に
 
 ## 変遷
 
+- **2026-09-25** — デモモード（`?demo`・`demo-script.js`・各パックの `demo.json`）を削除。現時点では機能過大という判断。
+  人格が vault へ移ったこと（未認証では読めない）とも相容れない
 - **2026-09-25** — TWAを `app.knowledgenote.work` 向けに再生成（パッケージ `work.knowledgenote.app.twa`）し、
   `portal-app/.well-known/assetlinks.json` を配信。Google の Digital Asset Links API で署名一致を確認
 - **2026-09-25** — ポータル本体（`portal-app/`）をCloudflare Workers Static Assetsで`app.knowledgenote.work`へ

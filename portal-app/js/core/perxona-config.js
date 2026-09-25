@@ -58,7 +58,6 @@ const PerxonaConfig = {
 
   // Key があれば既定で 3D。設定画面のスイッチで 2D 立ち絵へ戻せる
   isEnabled() {
-    if (window.DEMO_MODE) return false;                       // デモは 2D 固定（導入計画 §5）
     if (!this.getKey()) return false;
     return localStorage.getItem(PERXONA_KEYS.ENABLED) !== '0';
   },

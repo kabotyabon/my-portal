@@ -348,7 +348,6 @@ function getSessions() { return JSON.parse(localStorage.getItem(SESSIONS_KEY) ||
 function saveSessions(s) { localStorage.setItem(SESSIONS_KEY, JSON.stringify(s.slice(0, 30))); }
 
 function saveCurrentSession() {
-  if (window.DEMO_MODE) return;   // デモの会話は localStorage にも残さない
   if (!currentSession) return;
   currentSession.messages = [...chatHistory];
   const all = getSessions();
@@ -548,7 +547,7 @@ function appendChatBubble(role, text) {
  * 括弧の中身が close/more/free/other でない行は parseLog が読まないので、評価集計は汚さない。
  */
 function logChatFailure(reason) {
-  if (window.DEMO_MODE || typeof ConversationLog === 'undefined') return;
+  if (typeof ConversationLog === 'undefined') return;
   ConversationLog.enqueue({
     role: 'ai',
     speaker: 'システム',
@@ -575,8 +574,7 @@ function looksLikeThoughtLeak(text) {
  *   viaButton:true は「📝 日記に書く」等のボタン経由（定型文なので候補評価に数えない）。
  */
 async function sendChat(opts = {}) {
-  // デモモードは台本（DemoScript）が答えるため API キー不要
-  if (!window.DEMO_MODE && !getGeminiKey()) {
+  if (!getGeminiKey()) {
     alert('⚙️ 設定から Gemini API キー を先に設定してください。');
     return;
   }
@@ -605,7 +603,7 @@ async function sendChat(opts = {}) {
   // 会話ログ（要約せず全文を逐次記録）
   // 評価種別も一緒に残す。集計は localStorage にしか無く端末を替えると消えるため、
   // 「どの発話がどう評価されたか」を後から追えるようにしておく
-  if (typeof ConversationLog !== 'undefined' && !window.DEMO_MODE) {
+  if (typeof ConversationLog !== 'undefined') {
     ConversationLog.enqueue({
       role: 'user',
       speaker: 'ユーザー',
@@ -621,19 +619,6 @@ async function sendChat(opts = {}) {
   }
 
   const thinking = appendChatBubble('ai thinking', '考えています…');
-
-  // デモモード: Gemini の代わりに台本が答える。タグの解析・描画は通常経路と同じ
-  if (window.DEMO_MODE && typeof DemoScript !== 'undefined') {
-    try {
-      const reply = await DemoScript.reply(text);
-      if (thinking) thinking.classList.remove('thinking');
-      showAiReply(reply);
-      chatHistory.push({ role: 'assistant', content: reply });
-    } finally {
-      btn.disabled = false; input.focus();
-    }
-    return;
-  }
 
   const aiName = getAiName();
   const persona = getAiPrompt();
@@ -830,26 +815,13 @@ function clearChat() {
   if (currentSession) { currentSession.messages = []; saveCurrentSession(); }
   vnBacklog = [];
   renderVnBacklog();
-  if (window.DEMO_MODE && typeof DemoScript !== 'undefined') {
-    // デモは挨拶ではなく台本の導入からやり直す（挨拶の候補は台本に繋がらないため）
-    DemoScript.start().catch(e => console.warn('デモ台本の再開に失敗しました:', e));
-  } else {
-    showAiReply(welcomeMsg());   // 返信候補は showAiReply が挨拶用に切り替える
-  }
+  showAiReply(welcomeMsg());   // 返信候補は showAiReply が挨拶用に切り替える
   attachedFiles = []; renderFileChips();
   if (typeof setNavOpen === 'function') setNavOpen(false);
 }
 
 // ---- Session init ----
 (function initSession() {
-  // デモモードは保存済みセッションに触れない。導入台本は demo-script.js が
-  // このあと（html-loader の順次実行で）表示する
-  if (window.DEMO_MODE) {
-    currentSession = { id: 'demo', title: 'デモモード', messages: [] };
-    chatHistory = [];
-    renderChatPanel();
-    return;
-  }
   const sessions = getSessions();
   if (sessions.length > 0) {
     currentSession = { ...sessions[0] };

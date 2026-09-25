@@ -23,8 +23,6 @@
 
 // 使用中のペルソナ一式の置き場。定義は js/core/config.js。
 // このファイルが config.js より先に読まれる構成でも壊れないよう既定値を持たせる。
-const PERSONA_BASE       = (typeof PERSONA_DIR !== 'undefined' ? PERSONA_DIR : 'assets/personas/kohaho/');
-const SCENE_MANIFEST_URL = `${PERSONA_BASE}scene.json`;
 // 背景の永続化（BG_CONFIG_KEY / BG_LOCAL_KEY）は 2026-08-19 に設定UIと共に削除。
 // 起動時はペルソナの defaultBackground から始まり、対話中の [背景:] タグでのみ変わる。
 
@@ -38,7 +36,7 @@ const DEFAULT_SCENE = {
 
 // scene.json が読めない場合でも動くための最小マニフェスト
 const FALLBACK_MANIFEST = {
-  basePath: PERSONA_BASE,
+  basePath: 'assets/avatars/kohaho/',
   fallbackFile: 'avatar.png',
   defaultExpression: 'neutral',
   defaultBackground: 'mood',
@@ -72,8 +70,10 @@ window.AvatarScene = {
   },
 
   async _load() {
+    // 見た目のディレクトリは人格（card.json の defaultAvatar）と設定で決まるので、読み込み時に解決する
+    const base = typeof getAvatarDir === 'function' ? getAvatarDir() : FALLBACK_MANIFEST.basePath;
     try {
-      const res = await fetch(SCENE_MANIFEST_URL);
+      const res = await fetch(`${base}scene.json`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       this.manifest = { ...FALLBACK_MANIFEST, ...json };
@@ -81,10 +81,7 @@ window.AvatarScene = {
       console.warn('scene.json の読み込みに失敗しました。既定のシーン設定で続行します:', e);
       this.manifest = { ...FALLBACK_MANIFEST };
     }
-
-    // card.json の avatarUrl が指定されていればフォールバック画像として優先する
-    const personaAvatar = window.AI_PERSONA && window.AI_PERSONA.avatarUrl;
-    if (personaAvatar) this.manifest.personaAvatarUrl = personaAvatar;
+    this.manifest.basePath = base;
 
     // 既定表情（またはこの時点で要求されている表情）だけ先に解決して描画する。
     // 全表情の先読みを待つと立ち絵が出るまで数百ms かかるため、残りは裏で読む。
@@ -127,10 +124,10 @@ window.AvatarScene = {
     ) || null;
   },
 
-  /** フォールバック画像の URL（card.json の avatarUrl ＞ manifest.fallbackFile） */
+  /** フォールバック画像の URL（見た目ディレクトリの manifest.fallbackFile） */
   fallbackSrc() {
     const m = this._m();
-    return m.personaAvatarUrl || `${m.basePath || ''}${m.fallbackFile || 'avatar.png'}`;
+    return `${m.basePath || ''}${m.fallbackFile || 'avatar.png'}`;
   },
 
   /**
@@ -185,10 +182,10 @@ window.AvatarScene = {
     const stage = document.querySelector('.vn-stage');
     if (!stage) return;
 
-    // アクセスキー未設定（デモモードを除く）では、キャラクター・会話UIを一切出さない。
-    // 公開URLになった以上、認証前の訪問者に人格そのものを見せない（persona.json 等の
+    // アクセスキー未設定では、キャラクター・会話UIを一切出さない。
+    // 公開URLになった以上、認証前の訪問者に人格そのものを見せない（card.json 等の
     // 取得もここで止まるため、未認証の状態では通信も発生しない）。
-    if (!window.DEMO_MODE && typeof getToken === 'function' && !getToken()) {
+    if (typeof getToken === 'function' && !getToken()) {
       stage.classList.add('is-locked');
       this._mounted = true;
       return;

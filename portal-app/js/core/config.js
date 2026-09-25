@@ -1,51 +1,56 @@
 // =====================
-// ペルソナ（複数管理・2026-09-25〜）
+// 人格・表示の分離（2026-09-25〜）
 // =====================
-// 各パック一式（card.json / scene.json / avatar.png / expressions/）は
-// portal-app/assets/personas/<slug>/ に置く。一覧は同階層の index.json
-// （[{slug, name}, ...]）が持つ（静的サイトはディレクトリ一覧を取得できないため）。
-// 公開面に出るので、著作物に依拠しないオリジナルのペルソナのみを配置すること。
+// 人格（card.json）は個人に属するので非公開の vault に置き、中間サーバー経由で読む。
+// 人格は vault につき1つ（選ぶものではなく、その vault の持ち主の相棒）:
+//   vault/persona/card.json           … 人格の定義（defaultAvatar で既定の見た目を指す）
+// 表示（立ち絵・表情差分・scene.json）は誰が使っても同じ素材なのでアプリ側（公開）に置く:
+//   assets/avatars/index.json         … [{slug, name}, ...]
+//   assets/avatars/<slug>/scene.json  … 表情・背景の定義と画像一式
+// 公開面に出るので、著作物に依拠しないオリジナルの素材のみを配置すること。
 //
-// 選択中の slug は localStorage（ACTIVE_PERSONA_KEY）に保持する。
-// 切替は設定画面のペルソナ選択 → 保存 → location.reload() で行う
-// （PERSONA_DIR は起動時に1回だけ決まる定数のため、切替後は再読み込みが要る）。
-const PERSONAS_BASE = 'assets/personas/';
-const ACTIVE_PERSONA_KEY = 'active_persona_slug';
-const DEFAULT_PERSONA_SLUG = 'kohaho';
+// 見た目の選択は localStorage（ACTIVE_AVATAR_KEY）。空なら人格の defaultAvatar に従う。
+// 切替は設定画面 → location.reload()。
+const PERSONA_CARD_PATH = 'vault/persona/card.json';
+const AVATARS_BASE = 'assets/avatars/';
+const ACTIVE_AVATAR_KEY = 'active_avatar_slug';
+const DEFAULT_AVATAR_SLUG = 'kohaho';
 
-function getActivePersonaSlug() {
-  return localStorage.getItem(ACTIVE_PERSONA_KEY) || DEFAULT_PERSONA_SLUG;
+/** 見た目の上書き指定（空文字 = 人格の defaultAvatar に従う） */
+function getAvatarOverride() {
+  return localStorage.getItem(ACTIVE_AVATAR_KEY) || '';
 }
-window.getActivePersonaSlug = getActivePersonaSlug;
+window.getAvatarOverride = getAvatarOverride;
 
-function setActivePersonaSlug(slug) {
-  localStorage.setItem(ACTIVE_PERSONA_KEY, slug);
+function setAvatarOverride(slug) {
+  if (slug) localStorage.setItem(ACTIVE_AVATAR_KEY, slug);
+  else localStorage.removeItem(ACTIVE_AVATAR_KEY);
 }
-window.setActivePersonaSlug = setActivePersonaSlug;
+window.setAvatarOverride = setAvatarOverride;
 
-/** ペルソナ一覧（index.json）を取得する。設定画面のセレクタ用。 */
-async function fetchPersonaList() {
-  const res = await fetch(`${PERSONAS_BASE}index.json`);
+/** 実際に使う見た目のディレクトリ（上書き ＞ 人格の defaultAvatar ＞ 既定） */
+function getAvatarDir() {
+  const slug = getAvatarOverride()
+    || (window.AI_PERSONA && window.AI_PERSONA.defaultAvatar)
+    || DEFAULT_AVATAR_SLUG;
+  return `${AVATARS_BASE}${slug}/`;
+}
+window.getAvatarDir = getAvatarDir;
+
+/** この vault の人格（card.json）。無ければ null */
+async function fetchPersonaCard() {
+  const f = await GitHubStorage.getFile(PERSONA_CARD_PATH);
+  return f ? JSON.parse(f.content) : null;
+}
+window.fetchPersonaCard = fetchPersonaCard;
+
+/** 見た目一覧（公開の index.json） */
+async function fetchAvatarList() {
+  const res = await fetch(`${AVATARS_BASE}index.json`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
-window.fetchPersonaList = fetchPersonaList;
-
-// =====================
-// デモモード
-// =====================
-// URL に ?demo を付けて開くと、PAT・Gemini APIキーなしで体験できるデモモードになる。
-// AI の返答をペルソナパックの demo.json（台本）に差し替えるだけで、
-// 表情タグ・背景タグ・返信候補の解析／描画は本番と同じパイプラインを通す。
-// デモ中は GitHub への書き込み・セッション保存を一切行わない（js/domains/demo-script.js）。
-// 顔は使用中の選択に関わらず常に「こまる」固定（オーナーが今どのペルソナを使っているかを
-// 公開デモで漏らさないため）。
-const DEMO_MODE = new URLSearchParams(location.search).has('demo');
-window.DEMO_MODE = DEMO_MODE;
-const DEMO_PERSONA_SLUG = 'komaru';
-
-const PERSONA_DIR = `${PERSONAS_BASE}${DEMO_MODE ? DEMO_PERSONA_SLUG : getActivePersonaSlug()}/`;
-window.PERSONA_DIR = PERSONA_DIR;
+window.fetchAvatarList = fetchAvatarList;
 
 // =====================
 // 日付初期化（JST）
@@ -100,3 +105,6 @@ Object.keys(localStorage)
 // gh_pat・github_pat_token は以前ブラウザから直接GitHubを叩くために使っていた生PAT。
 // 今はアクセスキー（portal_api_key）経由で中間サーバーを叩くだけになり不要かつ危険なので破棄する。
 ['gh_pat', 'github_pat_token'].forEach(k => localStorage.removeItem(k));
+
+// --- 人格の選択（2026-09-25 の一時期だけ存在。人格は vault につき1つになった）の掃除 ---
+localStorage.removeItem('active_persona_slug');
