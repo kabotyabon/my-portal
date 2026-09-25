@@ -21,10 +21,11 @@
 my-portal/                     ← このリポジトリ（public）
 ├── portal-app/                ← 静的Webアプリ本体
 │   ├── index.html / css / js / partials / manifest.json
-│   ├── data/portal-config.json  ← 参照先リポジトリ・ブランチ
-│   └── assets/persona/          ← AI ペルソナ一式（仕様は docs/persona-pack-spec.md）
+│   └── assets/personas/<slug>/  ← AI ペルソナ一式（複数。一覧は index.json、仕様は docs/persona-pack-spec.md）
+├── worker-proxy/              ← 中間サーバー（Cloudflare Worker、api.knowledgenote.work）。GitHub PATはここにだけある
+├── web-deploy/                ← portal-app を app.knowledgenote.work へ配信する設定
 ├── docs/architecture/         ← 設計ドキュメント（テーマ別ハンドブック）。入口は README.md、決定の時系列は decisions.md
-├── tools/                     ← 画像下処理スクリプト（アプリからは呼ばない）
+├── tools/                     ← 画像下処理・アイコン生成スクリプト（アプリからは呼ばない）
 └── index.html                 ← 旧URL → portal-app/ へのリダイレクト
 
 my-portal-vault/               ← データリポジトリ（private・Contents API 経由で参照）
@@ -33,50 +34,49 @@ my-portal-vault/               ← データリポジトリ（private・Contents
     ├── conversations/         ← アバターとの会話ログ（自動追記）
     ├── knowledge/             ← ナレッジ
     ├── task/                  ← タスク・メモ（tasks.json / memo.md）
-    └── config.json            ← アプリ設定（クイックリンク等）
+    └── config.json            ← アプリ設定
 ```
 
-> **ペルソナだけは公開リポジトリ側にあります。** 静的サイトはディレクトリ一覧を取得できないため
-> Pages からの相対 fetch で読んでおり、private リポジトリには置けないためです。
-> したがって **公開しても差し支えないペルソナだけを `portal-app/assets/persona/` に置く**こと。
+> **ペルソナだけは公開リポジトリ側にあります。** 相対 fetch で読むため private リポジトリには置けません。
+> したがって **公開しても差し支えないペルソナだけを `portal-app/assets/personas/` に置く**こと。
+> なお、アクセスキー未設定の訪問者にはペルソナ・会話UIは表示されません。
 
 - **日記の月次まとめ運用**: 月が終わったら日別ファイルを暦年ディレクトリ配下の
   `YYYY/YYYY-MM.md`（`# YYYY年M月` + `## YYYY年M月D日` 見出し・`---` 区切り）へ統合する。
   AI チャットに「2026年6月の日記をまとめて」と頼めば `rollup_diary_month` ツールが実行される
   （日別ファイルの削除は明示的に依頼したときのみ）。
 
-- 公開URLは `…/my-portal/portal-app/` です（旧 `…/my-portal/` からは自動転送）。ホーム画面に追加済みの場合は開き直すと転送されます。
+- 公開URLは **`https://app.knowledgenote.work/`** です。GitHub Pages（`…/my-portal/portal-app/`）も並行稼働していますが、オリジンが別なので設定（アクセスキー等）は共有されません。
 
 ## デモ（セットアップ不要）
 
-公開URLに `?demo` を付けて開くと、**PAT・APIキーなし**でアバターとの対話を体験できます
+公開URLに `?demo` を付けて開くと、**アクセスキー・APIキーなし**でアバターとの対話を体験できます
 （表情・背景の切り替え、返信候補ボタンでの会話送り）。
 
-- デモの案内役は専用ペルソナ「こまる」（`portal-app/assets/_komaru/`）。使用中のペルソナとは独立です
+- デモの案内役は「こまる」（`portal-app/assets/personas/komaru/`）に固定。設定で選んでいるペルソナとは独立です
 - デモの会話は台本（パック内の `demo.json`）で、**データはどこにも保存されません**
 - 台本はペルソナパックの一部です。仕様は `docs/persona-pack-spec.md` §3.5 を参照
 
 ## セットアップ
 
-1. **GitHub Personal Access Token（PAT）** を取得します。**データリポジトリ（`my-portal-vault`）に対する** `Contents: write` と、日報生成に使う `Actions: write` が必要です（classic なら `repo` + `workflow`）。
-2. 参照先リポジトリ・ブランチは `portal-app/data/portal-config.json` の `repo` / `branch` で設定します（既定は `toshikazu-takemasa/my-portal-vault`）。
-3. ポータルを開き、右上の ⚙️ 設定ボタンから PAT を入力して保存します。
-4. 必要に応じて Gemini API キーを設定すると AI チャット機能が利用できます。
+1. 中間サーバー（`worker-proxy/`）をデプロイし、Secret `GITHUB_PAT`（`my-portal-vault` への `Contents: write`）と `PORTAL_API_KEY` を登録します（手順は `worker-proxy/README.md`）。GitHub PAT はブラウザには置きません。
+2. ポータル（`https://app.knowledgenote.work/`）を開き、設定画面の「アクセスキー」に `PORTAL_API_KEY` と同じ値を入力して保存します。
+3. 必要に応じて Gemini API キーを設定すると AI チャット機能が利用できます。
+4. ペルソナは設定画面の「ペルソナ」で切り替えられます。
 
 ## 機能
 
-- 📄 **日報** — 当日の日記ファイル（`vault/diary/YYYY-MM-DD.md`）を表示・編集。「↻ 日記を再生成」で GitHub Actions（daily-report.yml）からテンプレート付きで生成
+- 📄 **日報** — 当日の日記ファイル（`vault/diary/YYYY-MM-DD.md`）を表示・編集。「再生成」でテンプレートを生成（ブラウザ内で作成）
 - 📝 **メモ** — `vault/task/memo.md` を主題ごとのカード（`## 見出し` 単位）で管理。「MD」ボタンで全文編集にも切替可
 - 📌 **タスク** — `vault/task/tasks.json` をAIチャットのツール（get_tasks / add_task / update_task）経由で管理
-- 🔗 **クイックリンク** — よく使うサービスへのショートカット（並び替え・追加対応、`vault/config.json` に保存）
-- 🤖 **AI チャット** — Gemini（Function Calling 対応）を使ったコーチング・秘書機能。ペルソナは `portal-app/assets/persona/card.json` で定義
-- 🎭 **アバターの表情・背景** — 立ち絵の表情差分と背景を独立レイヤーで管理。定義は `portal-app/assets/persona/scene.json`。
-  AI は返答に `[表情:happy]` タグを入れて表情を切り替える。表情画像は `portal-app/assets/persona/expressions/` に置く
+- 🤖 **AI チャット** — Gemini（Function Calling 対応）を使ったコーチング・秘書機能。人格は `portal-app/assets/personas/<slug>/card.json` で定義
+- 🎭 **アバターの表情・背景** — 立ち絵の表情差分と背景を独立レイヤーで管理。定義は各パックの `scene.json`。
+  AI は返答に `[表情:happy]` タグを入れて表情を切り替える。表情画像は各パックの `expressions/` に置く
   （未配置でも avatar.png + CSS の疑似表情で動作。生成画像の背景透過・軽量化は `tools/remove-generated-background.js`）
-- 🔄 **アバターの切り替え** — 人格一式（card.json / scene.json / 画像）を1ディレクトリにまとめ、
-  **使用中は `portal-app/assets/persona/`、控えは `_名前/`** で置く。切り替えはディレクトリのリネーム2回だけ
-  （`git mv assets/persona assets/_old && git mv assets/_new assets/persona`）。
+- 🔄 **ペルソナの切り替え** — 人格一式（card.json / scene.json / 画像）を `assets/personas/<slug>/` に置き、
+  `assets/personas/index.json` に1行足すと設定画面の「ペルソナ」から選べる。
   読み先は `js/core/config.js` の `PERSONA_DIR` に集約している
+- 🧊 **3D アバター・音声（任意）** — Perxona Connect Kit。設定画面で Publishable Key・アバター・音声を選ぶと有効化
 - 💬 **会話ログ** — アバターとの会話を1往復ごとに要約せず `vault/conversations/YYYY-MM-DD_アバター会話.md` へ自動追記
 - 🗂 **過去の記録** — `vault/diary` / `vault/knowledge` を一覧・閲覧・編集。
   一覧上部の入力欄から **表示中のディレクトリへ新規ファイルを追加**できる

@@ -1,7 +1,7 @@
 {
   "spec": "portal-persona",
   "specVersion": 1,
-  "_note": "控えの人格。使用中に切り替えるときは assets/persona/ とディレクトリ名を入れ替える。",
+  "_note": "設定画面のペルソナ選択、またはデモモード（?demo）で使われる人格。",
 
   "id": "komaru",
   "language": "ja",

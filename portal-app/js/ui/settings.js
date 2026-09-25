@@ -77,10 +77,32 @@ function initSettingsTab() {
   showModalTokenUI();
   showModalGeminiUI();
   renderReplyFeedbackTally();
+  initPersonaSelect();
 
   const statusEl = document.getElementById('modal-status');
   if (statusEl) statusEl.textContent = '';
 }
+
+// ---- ペルソナ選択 ----
+async function initPersonaSelect() {
+  const select = document.getElementById('persona-select');
+  if (!select || typeof fetchPersonaList !== 'function') return;
+  try {
+    const list = await fetchPersonaList();
+    select.innerHTML = list.map(p => `<option value="${escapeHtml(p.slug)}">${escapeHtml(p.name)}</option>`).join('');
+    select.value = getActivePersonaSlug();
+  } catch (e) {
+    console.warn('ペルソナ一覧の取得に失敗しました:', e);
+  }
+}
+
+function switchPersona() {
+  const select = document.getElementById('persona-select');
+  if (!select || !select.value) return;
+  setActivePersonaSlug(select.value);
+  location.reload();
+}
+window.switchPersona = switchPersona;
 
 // ---- 返信候補から拾ったフィードバック ----
 function renderReplyFeedbackTally() {

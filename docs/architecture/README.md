@@ -10,7 +10,7 @@
 ```mermaid
 graph LR
   U["ユーザー<br>(ブラウザ / PWA)"] --> P["ポータル<br>GitHub Pages 静的アプリ<br>(my-portal / public)"]
-  P -- "相対 fetch" --> PA["assets/persona/<br>ペルソナパック"]
+  P -- "相対 fetch" --> PA["assets/personas/&lt;slug&gt;/<br>ペルソナパック（複数）"]
   P -- "Contents API + PAT" --> V[("my-portal-vault (private)<br>diary / task / conversations /<br>persona-state / knowledge / docs")]
   P -- "Function Calling" --> G["Gemini API"]
 ```

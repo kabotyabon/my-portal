@@ -81,5 +81,6 @@
 | 2026-09-25 | ポータル本体をCloudflare Workers Static Assetsでapp.knowledgenote.workへデプロイ（web-deploy/）。GitHub Pagesに代わる正式な公開URLとした。中間サーバーのALLOWED_ORIGINSに新オリジンを追加し疎通確認済み。GitHub Pagesは並行稼働のまま残す | demo-deploy |
 | 2026-09-25 | 公開URL化に伴い、アクセスキー未設定時は人格・会話UIを一切表示しないよう変更（デモモードは対象外）。あわせてPerxona Avatar IDをConnect APIカタログ取得のプルダウンに変更 | persona |
 | 2026-09-25 | scene.jsonのdefaultBackgroundをmood（暗いグラデーション）からauto（時刻連動・日中は明るい水色系）に変更 | persona |
+| 2026-09-25 | 複数ペルソナを設定画面から選択可能に。assets/personas/<slug>/ + index.json に再配置し、こまるを通常選択肢に昇格（デモは引き続きこまる固定）。人格・表示・音声の3層を独立に選ぶ方針 | persona |
 
 以後、決定のたびにこの表へ1行追記する（新しい行を末尾に）。

@@ -219,7 +219,7 @@ ${body}
 
 <!-- AI が remember_about_user ツールで書き換える。人が手で直してもよい。 -->
 <!-- 上限を超えた分はアプリが古い行から落とす（AI の判断に任せない）。 -->
-<!-- ここは「対話で変わるもの」だけ。人格の定義は assets/persona/card.json にある。 -->
+<!-- ここは「対話で変わるもの」だけ。人格の定義は assets/personas/<slug>/card.json にある。 -->
 
 ${secs}`;
   }

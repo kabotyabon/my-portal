@@ -1,18 +1,36 @@
 // =====================
-// ペルソナ
+// ペルソナ（複数管理・2026-09-25〜）
 // =====================
-// 使用中のアバター一式（card.json / scene.json / avatar.png / expressions/）の置き場。
-// 静的サイトはディレクトリ一覧を取得できないため、読む場所は 1つに固定する。
-//
-// vault は private リポジトリへ分離しているため、Pages から相対 fetch できるのは
-// この公開リポジトリ内のファイルだけになる。ペルソナ一式は portal-app/assets/persona/ に置く。
+// 各パック一式（card.json / scene.json / avatar.png / expressions/）は
+// portal-app/assets/personas/<slug>/ に置く。一覧は同階層の index.json
+// （[{slug, name}, ...]）が持つ（静的サイトはディレクトリ一覧を取得できないため）。
 // 公開面に出るので、著作物に依拠しないオリジナルのペルソナのみを配置すること。
 //
-// 切り替えは assets/ 配下のディレクトリをリネームして行う:
-//   git mv portal-app/assets/persona portal-app/assets/_persona-old
-//   git mv portal-app/assets/_persona-new portal-app/assets/persona
-// `_` で始まるディレクトリはパスが一致しないので読まれない
-// （例外: デモモードは DEMO_PERSONA_DIR で `_` 配下のパックを明示的に読む）。
+// 選択中の slug は localStorage（ACTIVE_PERSONA_KEY）に保持する。
+// 切替は設定画面のペルソナ選択 → 保存 → location.reload() で行う
+// （PERSONA_DIR は起動時に1回だけ決まる定数のため、切替後は再読み込みが要る）。
+const PERSONAS_BASE = 'assets/personas/';
+const ACTIVE_PERSONA_KEY = 'active_persona_slug';
+const DEFAULT_PERSONA_SLUG = 'kohaho';
+
+function getActivePersonaSlug() {
+  return localStorage.getItem(ACTIVE_PERSONA_KEY) || DEFAULT_PERSONA_SLUG;
+}
+window.getActivePersonaSlug = getActivePersonaSlug;
+
+function setActivePersonaSlug(slug) {
+  localStorage.setItem(ACTIVE_PERSONA_KEY, slug);
+}
+window.setActivePersonaSlug = setActivePersonaSlug;
+
+/** ペルソナ一覧（index.json）を取得する。設定画面のセレクタ用。 */
+async function fetchPersonaList() {
+  const res = await fetch(`${PERSONAS_BASE}index.json`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+window.fetchPersonaList = fetchPersonaList;
+
 // =====================
 // デモモード
 // =====================
@@ -20,14 +38,13 @@
 // AI の返答をペルソナパックの demo.json（台本）に差し替えるだけで、
 // 表情タグ・背景タグ・返信候補の解析／描画は本番と同じパイプラインを通す。
 // デモ中は GitHub への書き込み・セッション保存を一切行わない（js/domains/demo-script.js）。
+// 顔は使用中の選択に関わらず常に「こまる」固定（オーナーが今どのペルソナを使っているかを
+// 公開デモで漏らさないため）。
 const DEMO_MODE = new URLSearchParams(location.search).has('demo');
 window.DEMO_MODE = DEMO_MODE;
+const DEMO_PERSONA_SLUG = 'komaru';
 
-// デモの顔はこまる。使用中ペルソナ（assets/persona/ = 個人用）とは独立に、
-// 公開デモではこのパックを丸ごと使う（立ち絵・card.json・demo.json のすべて）。
-const DEMO_PERSONA_DIR = 'assets/_komaru/';
-
-const PERSONA_DIR = DEMO_MODE ? DEMO_PERSONA_DIR : 'assets/persona/';
+const PERSONA_DIR = `${PERSONAS_BASE}${DEMO_MODE ? DEMO_PERSONA_SLUG : getActivePersonaSlug()}/`;
 window.PERSONA_DIR = PERSONA_DIR;
 
 // =====================

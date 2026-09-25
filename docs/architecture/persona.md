@@ -22,20 +22,25 @@
   画像が無い表情は `avatar.png` ＋ CSS 疑似表情で代用（画像ゼロのパックも有効）
 - パック内のパス参照はすべてパック相対。絶対パスを書かないことがポータビリティの根拠
 
-### 使用中と控えの切り替え規約
+### 複数ペルソナの配置と切り替え
 
 ```
-使用中: portal-app/assets/persona/     ← アプリが読むのはここだけ
-控え:   portal-app/assets/_名前/       ← `_` 接頭辞。パス不一致で読まれない
-切替:   git mv assets/persona assets/_old && git mv assets/_new assets/persona
+portal-app/assets/personas/
+  index.json          ← 一覧（[{slug, name}]）。静的サイトはディレクトリ一覧を取れないため手で管理
+  kohaho/             ← こはる（既定）
+  komaru/             ← こまる（デモモードの固定の顔でもある）
 ```
 
-- 読み込みパスは `js/core/config.js` の `PERSONA_DIR` 1箇所に集約
-- 例外が1つ: デモモード（`?demo`）は `DEMO_PERSONA_DIR = 'assets/_komaru/'` を明示的に読む。
-  公開デモの顔（こまる）と個人用の使用中ペルソナ（こはる）を独立させるため
-- 設定UIは無い。切替は稀な操作なので `git mv` 2回で足りる
-- ペルソナが公開リポジトリ側にあるのは、Pages からの相対 fetch で読む必要があるため。
+- 選択中の slug は localStorage（`active_persona_slug`）。未設定なら `kohaho`
+- 読み込みパスは `js/core/config.js` の `PERSONA_DIR`（起動時に1回だけ決まる）に集約。
+  設定画面「ペルソナ」で切り替えると `location.reload()` で読み直す
+- デモモード（`?demo`）は選択に関わらず常に `komaru`。オーナーが今どのペルソナを使っているかを
+  公開デモで漏らさないため
+- パックを追加するときは `personas/<slug>/` を置いて `index.json` に1行足すだけ
+- ペルソナが公開リポジトリ側にあるのは、相対 fetch で読む必要があるため。
   公開面に置く以上、オリジナル作品（または権利処理済み）のパックだけを置く
+- 人格（このパック）・表示（2D立ち絵 / Perxona 3D）・音声（Perxona Voice、将来は Gemini TTS も）の
+  3層を独立に選べるようにするのが目標。現状、表示と音声は Perxona 設定側でグローバルに持つ
 
 ### アクセスキー未設定時は人格・会話UIを一切出さない（2026-09-25）
 
@@ -101,6 +106,9 @@
 
 ## 変遷
 
+- **2026-09-25** 複数ペルソナを設定画面から選べるようにした。`assets/persona/`（使用中）＋`assets/_名前/`（控え）を
+  `git mv` で入れ替える方式をやめ、全パックを `assets/personas/<slug>/` に並べて `index.json` で一覧化。
+  こまるをデモ専用から通常選択肢にも昇格。人格・表示・音声を独立に選ぶ3層モデルへの第一歩
 - **2026-09-25** アクセスキー未設定時は人格・会話UIを一切表示しないよう変更（app.knowledgenote.work公開に伴う）。
   あわせてPerxonaのAvatar IDをConnect APIカタログ（`/assets/avatars`）取得のプルダウンに変更（Voiceと同じ方式）
 - **2026-09-25** `scene.json`の`defaultBackground`を`mood`（表情ごとの暗い紫〜黒グラデーションに追従）から

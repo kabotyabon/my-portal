@@ -23,7 +23,7 @@
 
 // 使用中のペルソナ一式の置き場。定義は js/core/config.js。
 // このファイルが config.js より先に読まれる構成でも壊れないよう既定値を持たせる。
-const PERSONA_BASE       = (typeof PERSONA_DIR !== 'undefined' ? PERSONA_DIR : 'assets/persona/');
+const PERSONA_BASE       = (typeof PERSONA_DIR !== 'undefined' ? PERSONA_DIR : 'assets/personas/kohaho/');
 const SCENE_MANIFEST_URL = `${PERSONA_BASE}scene.json`;
 // 背景の永続化（BG_CONFIG_KEY / BG_LOCAL_KEY）は 2026-08-19 に設定UIと共に削除。
 // 起動時はペルソナの defaultBackground から始まり、対話中の [背景:] タグでのみ変わる。
