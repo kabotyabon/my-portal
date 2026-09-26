@@ -73,6 +73,7 @@ function _currentCharacterValue() {
 }
 
 let _perxonaVoices = [];   // Connect API の音声カタログ（Perxona キーがあるときに取得）
+let _geminiExtVoices = [];  // Gemini 拡張ボイスライブラリの日本語の声（Gemini キーがあるときに取得）
 
 /**
  * 音声の選択肢を、選んでいる見た目に合わせて作り直す。
@@ -94,6 +95,13 @@ function _renderVoiceOptions() {
       .map(([name, , desc]) => `<option value="gemini:${_escAttr(name)}">${_escAttr(name)}（${label}・${_escAttr(desc)}）</option>`)
       .join('') + '</optgroup>';
     html += group('female', '女性') + group('male', '男性');
+    // 拡張ボイスライブラリ（API で取得できたときだけ）
+    const ext = (gender, label) => {
+      const list = _geminiExtVoices.filter(v => v.gender === gender);
+      return list.length ? `<optgroup label="拡張・${label}">` + list.map(v =>
+        `<option value="gemini:${_escAttr(v.id)}">${_escAttr(v.name)}（${label}${v.description ? '・' + _escAttr(v.description) : ''}）</option>`).join('') + '</optgroup>' : '';
+    };
+    html += ext('female', '女性') + ext('male', '男性') + ext('other', 'その他');
     if (VoiceConfig.getGeminiVoice()) current = `gemini:${VoiceConfig.getGeminiVoice()}`;
   }
   select.innerHTML = html;
@@ -136,6 +144,16 @@ async function initCharacterSettings() {
   if (!select.value && select.options.length) select.selectedIndex = 0;
   select.onchange = _renderVoiceOptions;
   _renderVoiceOptions();
+
+  // 拡張ボイスは数百件あり得るので、標準の30種を先に出してから裏で取得して足す
+  if (getGeminiKey() && typeof GeminiTTS !== 'undefined') {
+    try {
+      _geminiExtVoices = await GeminiTTS.listVoices('ja');
+      _renderVoiceOptions();
+    } catch (e) {
+      console.warn('Gemini 拡張ボイスの取得に失敗しました（標準の30種のみ表示）:', e);
+    }
+  }
 }
 
 function switchCharacter() {

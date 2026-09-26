@@ -95,6 +95,43 @@ const GeminiTTS = {
     a.play().then(() => { a.dataset.unlocked = '1'; }).catch(() => {});
   },
 
+  /**
+   * 拡張ボイスライブラリ（GET /v1beta/voices）から日本語の声を取得する。
+   * 標準の30種（GEMINI_TTS_VOICES）以外に数百種あり、一覧は API でしか分からない。
+   * speech_config の voice にはこの `id` をそのまま渡す。
+   * @returns {Promise<{id: string, name: string, gender: string, description: string}[]>}
+   */
+  async listVoices(languageCode = 'ja') {
+    const key = typeof getGeminiKey === 'function' ? getGeminiKey() : '';
+    if (!key) return [];
+    const standard = new Set(GEMINI_TTS_VOICES.map(([n]) => n.toLowerCase()));
+    const out = [];
+    let token = '';
+    for (let page = 0; page < 10; page++) {   // 念のため上限（100件×10ページ）
+      const q = new URLSearchParams({ language_code: languageCode, page_size: '100' });
+      if (token) q.set('page_token', token);
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/voices?${q}`, {
+        headers: { 'x-goog-api-key': key }
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      for (const v of json.voices || []) {
+        const id = v.id || v.key;
+        const name = v.display_name || v.displayName || id;
+        if (!id || standard.has(String(name).toLowerCase())) continue;   // 標準30種は別に並べる
+        const g = String(v.gender || '').toLowerCase();
+        out.push({
+          id, name,
+          gender: g.includes('female') ? 'female' : g.includes('male') ? 'male' : 'other',
+          description: String(v.description || '').slice(0, 30)
+        });
+      }
+      token = json.next_page_token || json.nextPageToken || '';
+      if (!token) break;
+    }
+    return out;
+  },
+
   interrupt() {
     this._seq++;
     if (this._audio) this._audio.pause();
