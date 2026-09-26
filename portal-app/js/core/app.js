@@ -235,7 +235,8 @@ loadAllPartials().then(async () => {
           // ペルソナの言語（persona-pack-spec §2 の予約フィールド）。
           // v1 のランタイム注入文（表情タグ案内等）は日本語のみで、この値はまだ参照しない。
           language: card.language || 'ja',
-          defaultAvatar: card.defaultAvatar,   // 既定の見た目（assets/avatars/<slug>）。設定で上書きできる
+          defaultAvatar: card.defaultAvatar,
+          voiceStyle: card.voiceStyle || '',   // Gemini TTS の話し方の指示（speech_metadata.style として渡す）   // 既定の見た目（assets/avatars/<slug>）。設定で上書きできる
           greeting: card.greeting,     // 起動時の挨拶（口調は人格に属する）
           // この人格が使ってはいけない語。返答を機械的に照合するために持つ。
           // 本文に「使わない」と書くだけでは守られないため、宣言を機械可読にしてある。
