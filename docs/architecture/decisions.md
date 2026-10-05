@@ -86,5 +86,6 @@
 | 2026-09-25 | 人格（card.json）を vault/persona/card.json へ移し（vault につき1つ・設定での人格選択は廃止）、見た目（画像・scene.json）は公開の assets/avatars に分離。見た目は defaultAvatar＋設定で選ぶ。デモモード（?demo）は機能過大として削除。Perxona・Gemini のキーは引き続き秘匿扱い | persona / demo-deploy |
 | 2026-09-25 | 設定画面を整理。キー欄の形と接続テストを統一し、見た目は「こはる（2D）」「〇〇（3D）」を1つの一覧で選ぶ方式に（3D は Perxona キーがあるときだけ）。Scene ID 入力は廃止 | persona |
 | 2026-09-25 | 音声層に Gemini TTS（gemini-3.8-flash-lite-tts、interactions API）を追加。2D でも声を出せるように。声は見た目に紐づける（3D → Perxona 固有、2D → Gemini。既定は無音） | persona |
+| 2026-10-05 | Toggl Track API 連携を見送り (却下)。v9 は CORS が許可リスト制でブラウザから直接呼べず、localhost 限定の Node 中継（トークンは .env）を足す必要があり、現時点では複雑性に見合わない | （なし） |
 
 以後、決定のたびにこの表へ1行追記する（新しい行を末尾に）。
